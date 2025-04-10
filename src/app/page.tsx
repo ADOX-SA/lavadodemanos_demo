@@ -22,7 +22,7 @@ export default function Home() {
   const [completedSteps, setCompletedSteps] = useState(new Array(labels.length).fill(false));
   const [predicciones, setPredicciones] = useState<{ clase: string; score: number }[]>([]);
   const [loading, setLoading] = useState({ loading: true, progress: 0 });
-  const [model, setModel] = useState<{ net: tf.GraphModel | null; inputShape: number[] }>({ net: null, inputShape: [1, 0, 0, 3] });
+  const [model, setModel] = useState<{ net: tf.GraphModel; inputShape: number[] } | null>(null);
   const [timerStarted, setTimerStarted] = useState(false);
   const [streaming, setStreaming] = useState<"camera" | null>(null);
   const [consecutiveNoHandsFrames, setConsecutiveNoHandsFrames] = useState(0);
@@ -336,6 +336,7 @@ export default function Home() {
                   muted
                   ref={cameraRef}
                   onPlay={() => {
+                    if (!cameraRef.current || !canvasRef.current || !model) return;
                     if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
                       cameraRef.current,
