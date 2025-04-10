@@ -17,8 +17,8 @@ const Loader: React.FC<LoaderProps> = ({ text, progress }) => {
         <Image
           src="/LogoAdox.png"
           alt="Logo de ADOX"
-          width={110}
-          height={101}
+          width={100}
+          height={200}
         />
         <p className={style.title}>Lavado de manos</p>
         <p className={style.text}>{text}</p>
