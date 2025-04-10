@@ -94,7 +94,7 @@ export const detectAllClasses = async (
   const res = model.net.execute(input) as tf.Tensor<tf.Rank>; // Ejecutar inferencia
 
   const transRes = res.transpose([0, 2, 1]); // Transponer resultados
-  const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze(0); // Extraer scores
+  const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]); // Extraer scores
 
   const scores = [] as number[];
   for (let i = 0; i < numClass; i++) {
