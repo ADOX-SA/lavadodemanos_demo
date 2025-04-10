@@ -1,5 +1,6 @@
 import React from "react";
 import style from "../style/loader.module.css";
+import Image from "next/image";
 
 type LoaderProps = {
   text: string;
@@ -13,7 +14,12 @@ const Loader: React.FC<LoaderProps> = ({ text, progress }) => {
   return (
     <div className={style.body}>
       <div className={style.content}>
-        <img src="/LogoAdox.png" alt="Logo de ADOX" />
+        <Image
+          src="/LogoAdox.png"
+          alt="Logo de ADOX"
+          width={110}
+          height={101}
+        />
         <p className={style.title}>Lavado de manos</p>
         <p className={style.text}>{text}</p>
   
