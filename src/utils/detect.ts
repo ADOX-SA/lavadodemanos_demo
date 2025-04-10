@@ -83,7 +83,7 @@ export const detectAllClasses = async (
   const [modelWidth, modelHeight] = model.inputShape.slice(1, 3); // Obtener ancho y alto del modelo
 
   tf.engine().startScope(); // Iniciar scope de TensorFlow.js
-  const [input, xRatio, yRatio] = preprocess(source, modelWidth, modelHeight); // Preprocesar imagen
+  const [input] = preprocess(source, modelWidth, modelHeight); // Preprocesar imagen
 
   // Verificar si el tensor de entrada es nulo
   if (!input) {
