@@ -67,5 +67,3 @@ export const detect = async (
     // console.log(predictionValues);
   }
 };
-
-export default hands_model_setup;
