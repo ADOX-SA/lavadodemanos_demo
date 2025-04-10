@@ -9,7 +9,7 @@ import style from '../style/App.module.css';
 import IconSteps from "@/components/IconSteps/IconSteps";
 import ProgressTime from "@/components/TimeProgress/TimeProgress";
 import labels from "../utils/labels.json";
-import { capitalizeFirstLetter, soundNotificacion, soundSuccess } from "@/utils/func.utils";
+import { soundNotificacion, soundSuccess } from "@/utils/func.utils";
 import LogoAdox from "../../public/LogoAdox/Logo";
 import TitleProject from "../../public/Titulo/Titulo";
 import EyeOffIcon from "@/components/IconEye/IconEye";
@@ -50,12 +50,17 @@ export default function Home() {
           { onProgress: (fractions) => isMounted && setLoading({ loading: true, progress: fractions }) }
         );
 
-        const dummyInput = tf.ones(yolov8.inputs[0].shape || [1, 224, 224, 3]);
+      const inputShape = yolov8.inputs?.[0]?.shape;
+      if (!inputShape) {
+        throw new Error("No se pudo obtener la forma del modelo.");
+      }
+
+        const dummyInput = tf.ones(inputShape);
         const warmupResults = yolov8.execute(dummyInput);
 
         if (isMounted) {
           setLoading({ loading: false, progress: 1 });
-          setModel({ net: yolov8, inputShape: yolov8.inputs[0].shape });
+          setModel({ net: yolov8, inputShape });
         }
 
         tf.dispose([warmupResults, dummyInput]);
