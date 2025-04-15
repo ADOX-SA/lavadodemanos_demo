@@ -14,6 +14,7 @@ import EyeOffIcon from "@/components/IconEye/IconEye";
 import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
+import { BorderTimer } from "@/components/BorderTimer";
 
 export default function Home() {
   const allowedTrust = 50;
@@ -229,7 +230,6 @@ export default function Home() {
         }
       }
     };
-
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
   }, [streaming]);
@@ -311,17 +311,7 @@ export default function Home() {
             </div>
           </div>
           <div>
-            <div
-              style={{
-                width: 480,
-                height: 600,
-                overflow: "hidden",
-                backgroundImage: "url('/Camera/Camera.jpg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                position: "relative",
-              }}
-            >
+          <div className={style.cameraContainer}>
               <video
                 autoPlay
                 muted
@@ -345,29 +335,13 @@ export default function Home() {
                   transform: "rotate(180deg)", // Rota 180 grados el video
                 }}
               />
-            </div>
+              <BorderTimer timeLeft={timeLeft} initialTime={8} />
+                </div>
             <canvas ref={canvasRef} style={{ display: "none" }} />
+
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
             {countdownTimeLeft > 0 && (
-              <div
-                className={style.warningMessage}
-                style={{
-                  position: "absolute",
-                  top: 5,
-                  left: 960,
-                  width: "26%",
-                  height: "95%",
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  textAlign: "center",
-                  padding: 20,
-                  zIndex: 10,
-                }}
-              >
+              <div className={style.warningMessage}>
                 <h3>Sin actividad reconocida</h3>
                 <EyeOffIcon size={120} />
                 <p>Reinicio en {countdownTimeLeft}s.</p>

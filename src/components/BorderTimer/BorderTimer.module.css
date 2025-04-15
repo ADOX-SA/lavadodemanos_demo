@@ -1,0 +1,43 @@
+.borderWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* para que no interfiera */
+    z-index: 9;
+  }
+  
+  .borderTop,
+  .borderRight,
+  .borderBottom,
+  .borderLeft {
+    position: absolute;
+    background-color: limegreen;
+    transition: all 1s linear;
+  }
+  
+  .borderTop {
+    top: 0;
+    left: 0;
+    height: 4px;
+  }
+  
+  .borderRight {
+    top: 0;
+    right: 0;
+    width: 4px;
+  }
+  
+  .borderBottom {
+    bottom: 0;
+    right: 0;
+    height: 4px;
+  }
+  
+  .borderLeft {
+    bottom: 0;
+    left: 0;
+    width: 4px;
+  }
+  
