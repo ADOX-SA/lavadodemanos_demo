@@ -16,6 +16,8 @@ import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
 
+// import io from "socket.io-client";
+
 export default function Home() {
   const allowedTrust = 50;
   const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(8, () => {
@@ -96,6 +98,8 @@ export default function Home() {
   const cameraRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
+
+  // const socket = io('http://localhost:4000');
 
   // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
 
@@ -261,6 +265,38 @@ export default function Home() {
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
   }, [streaming]);
+
+  // Manejo de cámara con sockets ejemplo
+  {/*
+      useEffect(() => {
+    // Escucha el evento 'activarCamara' desde el backend
+    socket.on("activarCamara", (data) => {
+      console.log("Evento recibido:", data);
+      if (!streaming) {
+        // Abre la cámara y muestra el elemento
+        webcam.open(cameraRef.current);
+        cameraRef.current.style.display = "block";
+        setStreaming("camera");
+      } else {
+        // Cierra la cámara y oculta el elemento
+        webcam.close(cameraRef.current);
+        cameraRef.current.style.display = "none";
+        setStreaming(null);
+
+        // Detén la detección si está corriendo
+        stopDetectionRef.current?.();
+        canvasRef.current
+          ?.getContext("2d")
+          ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    });
+
+    // Limpieza para eliminar el listener cuando el componente se desmonte
+    return () => {
+      socket.off("activarCamara");
+    };
+  }, [streaming]);
+  */}
 
   return (
     <div className={style.centeredGrid}>
