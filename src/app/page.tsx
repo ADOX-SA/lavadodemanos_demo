@@ -18,8 +18,49 @@ import { BorderTimer } from "@/components/BorderTimer";
 
 export default function Home() {
   const allowedTrust = 50;
-  const { startTimer, resetTimer, isActiveTimer, timeLeft, pauseTimer } =
-    useTimer(8);
+  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(8, () => {
+    soundSuccess();
+    const currentStepScores = stepScores[currentStep];
+    const average =
+      currentStepScores.length > 0
+        ? currentStepScores.reduce((a, b) => a + b, 0) /
+          currentStepScores.length
+        : 0;
+    setAverages((prev) => {
+      const newAverages = [...prev];
+      newAverages[currentStep] = average;
+      return newAverages;
+    });
+
+    setCompletedSteps((prev) =>
+      prev.map((v, i) => (i === currentStep ? true : v))
+    );
+
+    if (currentStep < labels.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+      resetTimer(); // Reinicia el temporizador para el siguiente paso
+      pauseTimer();
+    } else {
+      //Valida el ultimo paso y apaga la camara.
+      webcam.close(cameraRef.current!);
+      cameraRef.current!.style.display = "none";
+      setStreaming(null);
+
+      stopDetectionRef.current?.();
+      canvasRef.current
+        ?.getContext("2d")
+        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      setInitializing(false);
+      resetTimer(); // Reinicia el temporizador si no se detectó la mano
+      pauseTimer();
+      setStepScores((prev) => {
+        const newScores = [...prev];
+        newScores[currentStep] = [];
+        return newScores;
+      });
+      setStepConfirmed(false); // Resetear confirmación al finalizar el tiempo
+    }
+  });
   const { loading, model } = useAiModelContext();
   const {
     countdownTimeLeft,
@@ -56,20 +97,12 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
-  // Manejo de detección y tiempos
-  useEffect(() => {
-    if (predicciones.length === 0) {
-      if (!isCountdownActive) {
-        setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-      }
-      setStepConfirmed(false); // Resetear confirmación si no hay manos
-    } else {
-      setConsecutiveNoHandsFrames(0);
-      if (isCountdownActive) {
-        stopCountdown();
-        // setRestartCountdown(0); // Reiniciar el contador de reinicio
-      }
+  // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
 
+  useEffect(() => {
+    if (predicciones.length > 0) {
+      stopCountdown();
+      setConsecutiveNoHandsFrames(0); // Reiniciar el contador de frames sin detección
       const bestPrediction = predicciones.reduce(
         (max, p) => (p.score > max.score ? p : max),
         predicciones[0]
@@ -77,34 +110,23 @@ export default function Home() {
       const isCurrentStep =
         labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-
       console.log(
         "Clase:",
         bestPrediction.clase,
         "- Score:",
         bestPrediction.score
       );
-
-      // Lógica de confirmación de paso
       if (isValid && !stepConfirmed) {
-        // Activa el inicializador solo en los pasos que son menores al paso 6
+        console.log("aca");
         if (currentStep < labels.length - 1) {
           setInitializing(true);
         }
         setStepConfirmed(true);
         startTimer(); // Inicia el temporizador al confirmar el paso
       }
-
-      // Cambiar esto
-      // La idea del promedio seria, que tome la cantidad total de todos los pasos incluyendo el actual
-      // y que lo divida por la suma total del score del paso actual
-      // y que lo multiplique por 100 para obtener el porcentaje podria ser esta idea. Porque esta calculando mal el promedio, es mas la cuenta esta mal, siempre va a dar bien.
-
-      // Otra cosa que estaria bueno es hacer un informe al final del proceso de lavado
-      // de los pasos que se hicieron en total en cada uno de los pasos, y que se muestre el promedio de cada paso. Esto ayuda a tener un registro para ver que pasos se
-      // hicieron bien y cuales no.
-      // Acumular scores solo si es el paso actual (aunque el score sea bajo)
       if (stepConfirmed && isCurrentStep) {
+        console.log("aca");
+
         setStepScores((prev) => {
           const newScores = [...prev];
           newScores[currentStep] = [
@@ -115,7 +137,70 @@ export default function Home() {
         });
       }
     }
-  }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
+    // Si no esta detectando nada durante 5 frames
+    else {
+      if (!initializing) return;
+      console.log("entro aca");
+      setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
+      if (consecutiveNoHandsFrames >= 5) {
+        pauseTimer(); // Pausar el temporizador si no se detecta movimiento
+        setStepConfirmed(false); // Resetear confirmación si no hay manos
+        startCountdown(); // Iniciar cuenta regresiva de reinicio
+      }
+    }
+  }, [predicciones]);
+  // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
+
+  // Manejo de detección y tiempos
+  // useEffect(() => {
+  //   if (predicciones.length === 0) {
+  //     if (!isCountdownActive) {
+  //       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
+  //     }
+  //     setStepConfirmed(false); // Resetear confirmación si no hay manos
+  //   } else {
+  //     setConsecutiveNoHandsFrames(0);
+  //     if (isCountdownActive) {
+  //       stopCountdown();
+  //       // setRestartCountdown(0); // Reiniciar el contador de reinicio
+  //     }
+
+  //     const bestPrediction = predicciones.reduce(
+  //       (max, p) => (p.score > max.score ? p : max),
+  //       predicciones[0]
+  //     );
+  //     const isCurrentStep =
+  //       labels.indexOf(bestPrediction.clase) === currentStep;
+  //     const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
+
+  //     console.log(
+  //       "Clase:",
+  //       bestPrediction.clase,
+  //       "- Score:",
+  //       bestPrediction.score
+  //     );
+
+  //     // Lógica de confirmación de paso
+  //     if (isValid && !stepConfirmed) {
+  //       // Activa el inicializador solo en los pasos que son menores al paso 6
+  //       if (currentStep < labels.length - 1) {
+  //         setInitializing(true);
+  //       }
+  //       setStepConfirmed(true);
+  //       startTimer(); // Inicia el temporizador al confirmar el paso
+  //     }
+
+  //     // Cambiar esto
+  //     // La idea del promedio seria, que tome la cantidad total de todos los pasos incluyendo el actual
+  //     // y que lo divida por la suma total del score del paso actual
+  //     // y que lo multiplique por 100 para obtener el porcentaje podria ser esta idea. Porque esta calculando mal el promedio, es mas la cuenta esta mal, siempre va a dar bien.
+
+  //     // Otra cosa que estaria bueno es hacer un informe al final del proceso de lavado
+  //     // de los pasos que se hicieron en total en cada uno de los pasos, y que se muestre el promedio de cada paso. Esto ayuda a tener un registro para ver que pasos se
+  //     // hicieron bien y cuales no.
+  //     // Acumular scores solo si es el paso actual (aunque el score sea bajo)
+  //   }
+  // }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
 
   // Resetear confirmación al cambiar de paso
   useEffect(() => {
@@ -132,63 +217,6 @@ export default function Home() {
   }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
 
   // Validar paso al terminar el tiempo
-  useEffect(() => {
-    if (timeLeft === 0 && isActiveTimer) {
-      const success = stepScores[currentStep].length > 0; // Validación basada en detecciones registradas
-
-      if (success) {
-        if (!completedSteps[currentStep]) {
-          soundSuccess();
-          const currentStepScores = stepScores[currentStep];
-          const average =
-            currentStepScores.length > 0
-              ? currentStepScores.reduce((a, b) => a + b, 0) /
-                currentStepScores.length
-              : 0;
-          setAverages((prev) => {
-            const newAverages = [...prev];
-            newAverages[currentStep] = average;
-            return newAverages;
-          });
-        }
-
-        setCompletedSteps((prev) =>
-          prev.map((v, i) => (i === currentStep ? true : v))
-        );
-
-        if (currentStep < labels.length - 1) {
-          setCurrentStep((prev) => prev + 1);
-          resetTimer(); // Reinicia el temporizador para el siguiente paso
-          pauseTimer();
-        } else {
-          //Valida el ultimo paso y apaga la camara.
-          webcam.close(cameraRef.current!);
-          cameraRef.current!.style.display = "none";
-          setStreaming(null);
-
-          stopDetectionRef.current?.();
-          canvasRef.current
-            ?.getContext("2d")
-            ?.clearRect(
-              0,
-              0,
-              canvasRef.current.width,
-              canvasRef.current.height
-            );
-          setInitializing(false);
-        }
-      } else {
-        resetTimer(); // Reinicia el temporizador si no se detectó la mano
-        pauseTimer();
-        setStepScores((prev) => {
-          const newScores = [...prev];
-          newScores[currentStep] = [];
-          return newScores;
-        });
-      }
-      setStepConfirmed(false); // Resetear confirmación al finalizar el tiempo
-    }
-  }, [timeLeft, isActiveTimer]);
 
   // Resetea todo a los valores inciales.
   const resetProcess = () => {
@@ -311,7 +339,7 @@ export default function Home() {
             </div>
           </div>
           <div>
-          <div className={style.cameraContainer}>
+            <div className={style.cameraContainer}>
               <video
                 autoPlay
                 muted
@@ -336,7 +364,7 @@ export default function Home() {
                 }}
               />
               <BorderTimer timeLeft={timeLeft} initialTime={8} />
-                </div>
+            </div>
             <canvas ref={canvasRef} style={{ display: "none" }} />
 
             <ProgressTime key={timeLeft} initialTime={timeLeft} />

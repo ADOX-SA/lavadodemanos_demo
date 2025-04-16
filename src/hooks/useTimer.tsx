@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+"use client";
+import { useEffect, useState, useCallback } from "react";
 
-const useTimer = (duration: number) => {
+const useTimer = (duration: number, onComplete?: () => void) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isActive, setIsActive] = useState(false);
 
@@ -13,23 +14,27 @@ const useTimer = (duration: number) => {
       }, 1000);
     } else if (timeLeft === 0) {
       setIsActive(false);
+      if (onComplete) {
+        onComplete();
+      }
     }
 
     return () => clearInterval(timer);
   }, [isActive, timeLeft]);
 
-  const startTimer = () => {
+  // Memorizar las funciones para evitar que cambien entre renders
+  const startTimer = useCallback(() => {
     setIsActive(true);
-  };
+  }, []);
 
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     setTimeLeft(duration);
     setIsActive(false);
-  };
+  }, [duration]);
 
-  const pauseTimer = () => {
+  const pauseTimer = useCallback(() => {
     setIsActive(false);
-  };
+  }, []);
 
   return {
     timeLeft,

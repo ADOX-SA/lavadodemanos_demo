@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import styles from "./BorderTimer.module.css";
 
@@ -7,7 +8,8 @@ interface BorderTimerProps {
 }
 
 const BorderTimer: React.FC<BorderTimerProps> = ({ timeLeft, initialTime }) => {
-  const progress = Math.max(0, Math.min(1, (initialTime - timeLeft) / initialTime)) * 100;
+  const progress =
+    Math.max(0, Math.min(1, (initialTime - timeLeft) / initialTime)) * 100;
 
   return (
     <div className={styles.borderWrapper}>
