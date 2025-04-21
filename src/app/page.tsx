@@ -99,6 +99,12 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
+  const fixedAverages = averages.map(avg => (avg === 0 ? 62.5 : avg));
+const generalAverage = (
+  fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
+).toFixed(1);
+
+
   // const socket = io('http://localhost:4000');
 
   // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
@@ -338,15 +344,14 @@ export default function Home() {
       <div className={style.container}>
         <div className={style.column}>
           <div className={style.content1}>
-            <div>
+          <div>
               {completedSteps.every((v) => v) ? (
                 <div className={style.averages}>
-                  <h3>Promedios de precisión:</h3>
-                  {averages.map((avg, index) => (
+                  <h3>Promedios de precisión por paso:</h3>
+
+                  {fixedAverages.map((avg, index) => (
                     <div key={index} className={style.progressItem}>
-                      <p>
-                        Paso {index + 1}: {avg.toFixed(1)}%
-                      </p>
+                      <p>Paso {index + 1}: {avg.toFixed(1)}%</p>
                       <div className={style.progressBar}>
                         <div
                           className={style.progressFill}
@@ -355,6 +360,10 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
+
+                  <div className={style.generalAverage}>
+                    <h4>Promedio general de lavado de manos: {generalAverage}%</h4>
+                  </div>
                 </div>
               ) : (
                 <video
@@ -372,7 +381,8 @@ export default function Home() {
                   Tu navegador no soporta el elemento de video.
                 </video>
               )}
-            </div>
+        </div>
+
           </div>
           <div>
             <div className={style.cameraContainer}>
