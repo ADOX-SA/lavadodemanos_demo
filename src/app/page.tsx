@@ -48,22 +48,23 @@ export default function Home() {
       cameraRef.current!.style.display = "none";
       setStreaming(null);
 
-
-
-
       stopDetectionRef.current?.();
       canvasRef.current
         ?.getContext("2d")
         ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
       setInitializing(false);
-      resetTimer(); // Reinicia el temporizador si no se detectó la mano
+      resetTimer();
       pauseTimer();
       setStepScores((prev) => {
         const newScores = [...prev];
         newScores[currentStep] = [];
         return newScores;
       });
-      setStepConfirmed(false); // Resetear confirmación al finalizar el tiempo
+      setStepConfirmed(false);
+      setShowFinalMessage(true); // 👈 Mostrá el mensaje final
+      startCountdown(); // 👈 Iniciá la cuenta regresiva
+      // Resetear confirmación al finalizar el tiempo
     }
   });
   const { loading, model } = useAiModelContext();
@@ -458,6 +459,12 @@ export default function Home() {
                 <h3>Sin actividad reconocida</h3>
                 <EyeOffIcon size={120} />
                 <p>Reinicio en {countdownTimeLeft}s.</p>
+              </div>
+            )}
+            {showFinalMessage && (
+              <div className={style.finalMessage}>
+                <p>Proceso completo. Reiniciando en {countdownTimeLeft} segundos...</p>
+                <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
               </div>
             )}
           </div>
