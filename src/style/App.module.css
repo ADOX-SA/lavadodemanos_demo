@@ -146,13 +146,6 @@
   text-align: center;
   margin: 10px 0px 0px;
 
-  font-family: 'Roboto';
-  font-style: normal;
-  font-weight: 300;
-  font-size: 32px;
-  text-align: center;
-  margin: 10px 0 0;
-
   position: absolute;
   top: 5px;
   left: 960px;
@@ -187,4 +180,34 @@
   background-size: cover;
   background-position: center;
   position: relative;
+}
+
+.finalMessage {
+  position: absolute;
+  top: 5px;
+  left: 960px;
+  width: 26%;
+  height: 95%;
+  background-color: rgb(0, 0, 0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 20px;
+  z-index: 10;
+}
+
+.finalMessage p {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 300;
+  font-size: 22px;
+  text-align: center;
+  margin: 10px 0px 0px;
+}
+
+.finalMessage h3{
+  font-weight: 500;
+  font-size: 32px;
 }

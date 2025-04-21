@@ -44,10 +44,6 @@ export default function Home() {
       pauseTimer();
     } else {
       //TODO: Valida el ultimo paso y apaga la camara, pone un cartel inidicando que se reinicia en x cantidad de tiempo.
-      webcam.close(cameraRef.current!);
-      cameraRef.current!.style.display = "none";
-      setStreaming(null);
-
       stopDetectionRef.current?.();
       canvasRef.current
         ?.getContext("2d")
@@ -463,7 +459,8 @@ export default function Home() {
             )}
             {showFinalMessage && (
               <div className={style.finalMessage}>
-                <p>Proceso completo. Reiniciando en {countdownTimeLeft} segundos...</p>
+                <p>¡Proceso de lavado completo! 🙌</p>
+                <h3>Reinicio en {countdownTimeLeft}s.</h3>
                 <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
               </div>
             )}
