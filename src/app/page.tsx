@@ -43,7 +43,7 @@ export default function Home() {
       resetTimer(); // Reinicia el temporizador para el siguiente paso
       pauseTimer();
     } else {
-      //Valida el ultimo paso y apaga la camara.
+      //TODO: Valida el ultimo paso y apaga la camara, pone un cartel inidicando que se reinicia en x cantidad de tiempo.
       webcam.close(cameraRef.current!);
       cameraRef.current!.style.display = "none";
       setStreaming(null);
@@ -244,33 +244,53 @@ const generalAverage = (
   };
 
   // Manejo de cámara
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
-        if (!streaming) {
-          webcam.open(cameraRef.current!);
-          cameraRef.current!.style.display = "block";
-          setStreaming("camera");
-        } else {
-          webcam.close(cameraRef.current!);
-          cameraRef.current!.style.display = "none";
-          setStreaming(null);
+  // useEffect(() => {
+  //   const handleKeyPress = (event: KeyboardEvent) => {
+  //     if (event.key === "Enter") {
+  //       if (!streaming) {
+  //         webcam.open(cameraRef.current!);
+  //         cameraRef.current!.style.display = "block";
+  //         setStreaming("camera");
+  //       } else {
+  //         webcam.close(cameraRef.current!);
+  //         cameraRef.current!.style.display = "none";
+  //         setStreaming(null);
 
-          stopDetectionRef.current?.();
-          canvasRef.current
-            ?.getContext("2d")
-            ?.clearRect(
-              0,
-              0,
-              canvasRef.current.width,
-              canvasRef.current.height
-            );
-        }
-      }
-    };
-    document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [streaming]);
+  //         stopDetectionRef.current?.();
+  //         canvasRef.current
+  //           ?.getContext("2d")
+  //           ?.clearRect(
+  //             0,
+  //             0,
+  //             canvasRef.current.width,
+  //             canvasRef.current.height
+  //           );
+  //       }
+  //     }
+  //   };
+  //   document.addEventListener("keydown", handleKeyPress);
+  //   return () => document.removeEventListener("keydown", handleKeyPress);
+  // }, [streaming]);
+
+
+  useEffect(() => {
+    // Abre la cámara automáticamente al montar el componente
+    webcam.open(cameraRef.current!);
+    cameraRef.current!.style.display = "block";
+    setStreaming("camera");
+  
+    // return () => {
+    //   // Limpieza: cerrar cámara y limpiar canvas
+    //   webcam.close(cameraRef.current!);
+    //   cameraRef.current!.style.display = "none";
+    //   setStreaming(null);
+  
+    //   stopDetectionRef.current?.();
+    //   canvasRef.current
+    //     ?.getContext("2d")
+    //     ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    // };
+  }, []);
 
   // Manejo de cámara con sockets ejemplo
   {/*
