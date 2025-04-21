@@ -48,6 +48,9 @@ export default function Home() {
       cameraRef.current!.style.display = "none";
       setStreaming(null);
 
+
+
+
       stopDetectionRef.current?.();
       canvasRef.current
         ?.getContext("2d")
@@ -100,9 +103,10 @@ export default function Home() {
   const webcam = new Webcam();
 
   const fixedAverages = averages.map(avg => (avg === 0 ? 62.5 : avg));
-const generalAverage = (
+  const generalAverage = (
   fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
-).toFixed(1);
+  ).toFixed(1);
+  const [showFinalMessage, setShowFinalMessage] = useState(false);
 
 
   // const socket = io('http://localhost:4000');
@@ -324,6 +328,21 @@ const generalAverage = (
   }, [streaming]);
   */}
 
+  // Manejo de teclado para reiniciar el proceso al presionar Enter
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Enter" && showFinalMessage) {
+        stopCountdown();     // Cancelar la cuenta regresiva si Enter fue presionado
+        resetProcess();      // Reiniciar el proceso
+        setShowFinalMessage(false); // Ocultar el mensaje final
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [showFinalMessage]);
+
+  
   return (
     <div className={style.centeredGrid}>
       {loading.loading && (
