@@ -65,7 +65,7 @@ export default function Home() {
   });
   const { loading, model } = useAiModelContext();
   const { countdownTimeLeft, startCountdown, stopCountdown, isCountdownActive } = useCountdown({
-    duration: 20,
+    duration: 12,
     onComplete: () => {
       resetProcess();
     },
@@ -172,7 +172,17 @@ export default function Home() {
         startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
       }
     }
-  }, [predicciones]);
+  }, [
+    predicciones,
+    consecutiveNoHandsFrames,
+    currentStep,
+    initializing,
+    pauseTimer,
+    startCountdown,
+    startTimer,
+    stepConfirmed,
+    stopCountdown,
+  ]);
   
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
@@ -228,10 +238,11 @@ export default function Home() {
   // }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
 
   // Resetear confirmación al cambiar de paso
+ 
   useEffect(() => {
     setStepConfirmed(false);
     pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
-  }, [currentStep]);
+  }, [currentStep, pauseTimer]);
 
   // Manejar reinicio por inactividad
   useEffect(() => {
@@ -239,12 +250,10 @@ export default function Home() {
       pauseTimer();
       startCountdown(); // Iniciar cuenta regresiva de reinicio
     }
-  }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
-
-  // Validar paso al terminar el tiempo
+  }, [consecutiveNoHandsFrames, isCountdownActive, initializing, pauseTimer, startCountdown]);
 
   // Resetea todo a los valores inciales.
-  const resetProcess = () => {
+  const resetProcess = React.useCallback(() => {
     console.log("Reiniciando todo el proceso...");
     setCurrentStep(0);
     setCompletedSteps(new Array(labels.length).fill(false));
@@ -257,8 +266,7 @@ export default function Home() {
     setStepConfirmed(false);
     setInitializing(false);
     setShowFinalMessage(false);
-  };
-
+  }, [resetTimer, pauseTimer, stopCountdown]);
 
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
@@ -276,8 +284,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, []);
-
+  }, [resetProcess, stopCountdown, webcam]);
   
   return (
     <div className={style.centeredGrid}>
