@@ -266,7 +266,7 @@ export default function Home() {
       cameraRef.current!.style.display = "block";
       setStreaming("camera");
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && showFinalMessage) {
+      if (event.key === "Enter" ) {
         stopCountdown();
         resetProcess();
       }
@@ -276,7 +276,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [showFinalMessage]);
+  }, []);
 
   
   return (
