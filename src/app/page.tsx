@@ -105,7 +105,7 @@ export default function Home() {
   const [showFinalMessage, setShowFinalMessage] = useState(false);
 
   const startDetection = () => { 
-    if (!cameraRef.current || !canvasRef.current || !model) return;
+    // if (!cameraRef.current || !canvasRef.current || !model) return;
   
     webcam.open(cameraRef.current);
     cameraRef.current.style.display = "block";
