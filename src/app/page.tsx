@@ -173,61 +173,7 @@ export default function Home() {
       }
     }
   }, [predicciones]);
-  
-  // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
-  // Manejo de detección y tiempos
-  // useEffect(() => {
-  //   if (predicciones.length === 0) {
-  //     if (!isCountdownActive) {
-  //       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-  //     }
-  //     setStepConfirmed(false); // Resetear confirmación si no hay manos
-  //   } else {
-  //     setConsecutiveNoHandsFrames(0);
-  //     if (isCountdownActive) {
-  //       stopCountdown();
-  //       // setRestartCountdown(0); // Reiniciar el contador de reinicio
-  //     }
-
-  //     const bestPrediction = predicciones.reduce(
-  //       (max, p) => (p.score > max.score ? p : max),
-  //       predicciones[0]
-  //     );
-  //     const isCurrentStep =
-  //       labels.indexOf(bestPrediction.clase) === currentStep;
-  //     const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-
-  //     console.log(
-  //       "Clase:",
-  //       bestPrediction.clase,
-  //       "- Score:",
-  //       bestPrediction.score
-  //     );
-
-  //     // Lógica de confirmación de paso
-  //     if (isValid && !stepConfirmed) {
-  //       // Activa el inicializador solo en los pasos que son menores al paso 6
-  //       if (currentStep < labels.length - 1) {
-  //         setInitializing(true);
-  //       }
-  //       setStepConfirmed(true);
-  //       startTimer(); // Inicia el temporizador al confirmar el paso
-  //     }
-
-  //     // Cambiar esto
-  //     // La idea del promedio seria, que tome la cantidad total de todos los pasos incluyendo el actual
-  //     // y que lo divida por la suma total del score del paso actual
-  //     // y que lo multiplique por 100 para obtener el porcentaje podria ser esta idea. Porque esta calculando mal el promedio, es mas la cuenta esta mal, siempre va a dar bien.
-
-  //     // Otra cosa que estaria bueno es hacer un informe al final del proceso de lavado
-  //     // de los pasos que se hicieron en total en cada uno de los pasos, y que se muestre el promedio de cada paso. Esto ayuda a tener un registro para ver que pasos se
-  //     // hicieron bien y cuales no.
-  //     // Acumular scores solo si es el paso actual (aunque el score sea bajo)
-  //   }
-  // }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
-
-  // Resetear confirmación al cambiar de paso
   useEffect(() => {
     setStepConfirmed(false);
     pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
@@ -259,12 +205,11 @@ export default function Home() {
     setShowFinalMessage(false);
   };
 
-
-  // Manejo de teclado para reiniciar el proceso al presionar Enter
+  // Manejo de teclado para reiniciar el proceso al presionar Enter al final.
   useEffect(() => {
-      webcam.open(cameraRef.current!);
-      cameraRef.current!.style.display = "block";
-      setStreaming("camera");
+    webcam.open(cameraRef.current!);
+    cameraRef.current!.style.display = "block";
+    setStreaming("camera");
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Enter" ) {
         stopCountdown();
@@ -276,22 +221,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, []);
-
-   // Manejo de teclado para reiniciar el proceso al presionar Enter
-   useEffect(() => {
-  const handleKeyPress = (event: KeyboardEvent) => {
-    if (event.key === "Enter" && showFinalMessage ) {
-      stopCountdown();
-      resetProcess();
-    }
-    if(event.key === "Space") {
-      // hacer funcion que salte el paso actual.
-    }
-  };
-  window.addEventListener("keydown", handleKeyPress);
-  return () => window.removeEventListener("keydown", handleKeyPress);
-}, [showFinalMessage]);
+  }, [showFinalMessage]);
   
   return (
     <div className={style.centeredGrid}>
