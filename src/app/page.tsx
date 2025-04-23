@@ -262,21 +262,21 @@ export default function Home() {
 
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
-    const openCam = () => {
       webcam.open(cameraRef.current!);
       cameraRef.current!.style.display = "block";
       setStreaming("camera");
-    }
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && showFinalMessage) {
         stopCountdown();
         resetProcess();
       }
+      if(event.key === "Space") {
+        // hacer funcion que salte el paso actual.
+      }
     };
-    openCam();
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, []);
+  }, [showFinalMessage]);
 
   
   return (
