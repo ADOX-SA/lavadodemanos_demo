@@ -268,7 +268,7 @@ export default function Home() {
       setStreaming("camera");
     }
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && showFinalMessage) {
+      if (event.key === "Enter") {
         stopCountdown();
         resetProcess();
       }
