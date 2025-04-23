@@ -112,13 +112,20 @@ export default function Home() {
       // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
       const boostedPredicciones = predicciones.map((p) => {
         if (p.clase === labels[currentStep]) {
+          // BOOST al paso actual
           return {
             ...p,
-            score: Math.min(p.score + 40, 100), // 🛡️ No pasarse del máximo
+            score: Math.min(p.score + 30, 100),
+          };
+        } else {
+          // PENALIZACIÓN a los otros pasos
+          return {
+            ...p,
+            score: Math.max(p.score - 70, 0), // Asegurarse que no baje de 0
           };
         }
-        return p;
       });
+      
   
       // 🔍 Determinar la mejor predicción
       const bestPrediction = boostedPredicciones.reduce(
