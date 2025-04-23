@@ -15,7 +15,6 @@ import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
-// import confetti from "canvas-confetti";
 
 // import io from "socket.io-client";
 
@@ -53,27 +52,20 @@ export default function Home() {
       setInitializing(false);
       resetTimer();
       pauseTimer();
-
-      // se hace en resetProcess()
-      // setStepScores((prev) => {
-      //   const newScores = [...prev];
-      //   newScores[currentStep] = [];
-      //   return newScores;
-      // });
+      setStepScores((prev) => {
+        const newScores = [...prev];
+        newScores[currentStep] = [];
+        return newScores;
+      });
       setStepConfirmed(false);
       setShowFinalMessage(true); // 👈 Mostrá el mensaje final
       startCountdown(); // 👈 Iniciá la cuenta regresiva
-      // confetti({
-      //   particleCount: 150,
-      //   spread: 100,
-      //   origin: { y: 0.6 },
-      // });
       // Resetear confirmación al finalizar el tiempo
     }
   });
   const { loading, model } = useAiModelContext();
   const { countdownTimeLeft, startCountdown, stopCountdown, isCountdownActive } = useCountdown({
-    duration: 12,
+    duration: 20,
     onComplete: () => {
       resetProcess();
     },
@@ -104,66 +96,7 @@ export default function Home() {
   ).toFixed(1);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
 
-  const startDetection = () => { 
-    // if (!cameraRef.current || !canvasRef.current || !model) return;
-  
-    webcam.open(cameraRef.current);
-    cameraRef.current.style.display = "block";
-    setStreaming("camera");
-  
-    stopDetectionRef.current = detectVideo(
-      cameraRef.current,
-      model,
-      canvasRef.current,
-      allowedTrust,
-      (pred) => setPredicciones(pred)
-    );
-  };
-//aca
-  const skipCurrentStep = () => {
-    console.log("Valida => ",(1 === currentStep ? true : false));
-    console.log("Valida => ",(2 === currentStep ? true : false));
-    console.log("Valida => ",(3 === currentStep ? true : false));
-    console.log("Valida => ",(4 === currentStep ? true : false));
-    console.log("Valida => ",(6 === currentStep ? true : false));
-    console.log("Valida => ",(6 === currentStep ? true : false));
-    console.log(currentStep);
-    setCompletedSteps((prev) =>
-      prev.map((v, i) => (i === currentStep ? true : v))
-    );
-  
-    setAverages((prev) => {
-      const newAverages = [...prev];
-      newAverages[currentStep] = 100; // Podés poner 100 como valor simbólico
-      return newAverages;
-    });
-  
-    if (currentStep < labels.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-      resetTimer();
-      pauseTimer();
-    } else {
-      // Último paso, cerrar proceso como si estuviera completo
-      stopDetectionRef.current?.();
-      canvasRef.current
-        ?.getContext("2d")
-        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-  
-      setInitializing(false);
-      resetTimer();
-      pauseTimer();
-      setStepConfirmed(false);
-      setShowFinalMessage(true);
-      startCountdown();
-      // confetti({
-      //   particleCount: 150,
-      //   spread: 100,
-      //   origin: { y: 0.6 },
-      // });
-    }
-  };
-  
-  
+
   // const socket = io('http://localhost:4000');
 
   // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
@@ -171,27 +104,30 @@ export default function Home() {
   useEffect(() => {
     if (predicciones.length > 0) {
       if (currentStep < labels.length - 1) {
-        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva si hay actividad
+        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva de reinicio si hay detección válida
       }
   
-      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar contador de inactividad
+      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar el contador de frames sin detección
   
-      // 🎯 Boost al paso actual, penalización al resto
+      // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
       const boostedPredicciones = predicciones.map((p) => {
         if (p.clase === labels[currentStep]) {
+          // BOOST al paso actual
           return {
             ...p,
-            score: Math.min(p.score + 30, 100), // BOOST paso actual
+            score: Math.min(p.score + 30, 100),
           };
         } else {
+          // PENALIZACIÓN a los otros pasos
           return {
             ...p,
-            score: Math.max(p.score - 40, 0), // Penalización controlada
+            score: Math.max(p.score - 70, 0), // Asegurarse que no baje de 0
           };
         }
       });
+      
   
-      // 🔍 Obtener la mejor predicción post-ajuste
+      // 🔍 Determinar la mejor predicción
       const bestPrediction = boostedPredicciones.reduce(
         (max, p) => (p.score > max.score ? p : max),
         boostedPredicciones[0]
@@ -202,22 +138,15 @@ export default function Home() {
       const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
   
-      // ✅ Confirmar paso válido e iniciar temporizador
       if (isValid && !stepConfirmed) {
         console.log("✅ Paso válido detectado, inicializando...");
         if (currentStep < labels.length - 1) {
           setInitializing(true);
         }
-        setStepConfirmed(true);
-        startTimer();
+        setStepConfirmed(true); // Confirmamos este paso
+        startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
       }
   
-      // ⛳ Finalizar estado de inicialización una vez validado
-      if (stepConfirmed && isCurrentStep && initializing) {
-        setInitializing(false);
-      }
-  
-      // 📈 Acumular score del paso actual para calcular el promedio
       if (stepConfirmed && isCurrentStep) {
         console.log("📈 Acumulando score para promedio del paso actual");
         setStepScores((prev) => {
@@ -230,7 +159,7 @@ export default function Home() {
         });
       }
     } else {
-      // 📉 Si no hay predicciones, aumentamos contador de inactividad
+      // 📉 Si no se detecta nada, acumulamos frames sin manos
       if (!initializing) return;
   
       console.log("👋 No se detectan manos, acumulando frames vacíos");
@@ -240,11 +169,10 @@ export default function Home() {
         console.log("🔁 Pausando por inactividad");
         pauseTimer();
         setStepConfirmed(false);
-        startCountdown(); // 🕒 Iniciar cuenta regresiva para reinicio
+        startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
       }
     }
   }, [predicciones]);
-  
   
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
@@ -300,7 +228,6 @@ export default function Home() {
   // }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
 
   // Resetear confirmación al cambiar de paso
- 
   useEffect(() => {
     setStepConfirmed(false);
     pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
@@ -313,6 +240,8 @@ export default function Home() {
       startCountdown(); // Iniciar cuenta regresiva de reinicio
     }
   }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
+
+  // Validar paso al terminar el tiempo
 
   // Resetea todo a los valores inciales.
   const resetProcess = () => {
@@ -328,27 +257,41 @@ export default function Home() {
     setStepConfirmed(false);
     setInitializing(false);
     setShowFinalMessage(false);
-    startDetection(); // ⬅️ Reiniciamos la cámara y el modelo al final
   };
+
+
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
-    startDetection(); // 🔁 Cámara y modelo activos desde el inicio
-  
+      webcam.open(cameraRef.current!);
+      cameraRef.current!.style.display = "block";
+      setStreaming("camera");
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" ) {
         stopCountdown();
-        resetProcess(); // Esto también llamará a startDetection internamente
+        resetProcess();
       }
-      if (event.key === " ") {
-        // Hacer función para saltar paso actual
-        skipCurrentStep();
+      if(event.key === "Space") {
+        // hacer funcion que salte el paso actual.
       }
     };
-  
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, []);
-  
+
+   // Manejo de teclado para reiniciar el proceso al presionar Enter
+   useEffect(() => {
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key === "Enter" && showFinalMessage ) {
+      stopCountdown();
+      resetProcess();
+    }
+    if(event.key === "Space") {
+      // hacer funcion que salte el paso actual.
+    }
+  };
+  window.addEventListener("keydown", handleKeyPress);
+  return () => window.removeEventListener("keydown", handleKeyPress);
+}, [showFinalMessage]);
   
   return (
     <div className={style.centeredGrid}>
