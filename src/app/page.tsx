@@ -103,26 +103,29 @@ export default function Home() {
 
   useEffect(() => {
     if (predicciones.length > 0) {
-      // stopCountdown(); Esto rompe el temporizador, y queda el cartel fijo en x segundos.
+      if (currentStep < labels.length - 1) {
+        stopCountdown(); //Esto rompe el temporizador del cartel de reinicio, y queda el cartel fijo en x segundos.
+        // Porque cuando esta el cartel de reinicio, si detecta calquier paso activa esta funcion y cambia el valor del reinicio.
+      }
       setConsecutiveNoHandsFrames(0); // Reiniciar el contador de frames sin detección
-      const bestPrediction = predicciones.reduce(
-        (max, p) => (p.score > max.score ? p : max),
-        predicciones[0]
-      );
+      const bestPrediction = predicciones.reduce((max, p) => (p.score > max.score ? p : max), predicciones[0]);
       const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
+
       console.log("Clase:", bestPrediction.clase, "- Score:", bestPrediction.score);
+      
       if (isValid && !stepConfirmed) {
-        console.log("aca");
+        console.log("Si es valido y no esta confirmado.");
         if (currentStep < labels.length - 1) {
+          console.log("Si es menor al paso 6. Inicializando...");
           setInitializing(true);
         }
-        setStepConfirmed(true);
+        setStepConfirmed(true); // Confirmar el paso actual
         startTimer(); // Inicia el temporizador al confirmar el paso
       }
       if (stepConfirmed && isCurrentStep) {
-        console.log("aca");
-
+        console.log("Si es el paso actual y ya esta confirmado.");
+        // Acumular scores solo si es el paso actual (aunque el score sea bajo)
         setStepScores((prev) => {
           const newScores = [...prev];
           newScores[currentStep] = [
@@ -138,11 +141,11 @@ export default function Home() {
       if (!initializing) return;
       console.log("entro aca");
       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-      // if (consecutiveNoHandsFrames >= 5) {
-      //   pauseTimer(); // Pausar el temporizador si no se detecta movimiento
-      //   setStepConfirmed(false); // Resetear confirmación si no hay manos
-      //   startCountdown(); // Iniciar cuenta regresiva de reinicio
-      // }
+      if (consecutiveNoHandsFrames >= 5) {
+        pauseTimer(); // Pausar el temporizador si no se detecta movimiento
+        setStepConfirmed(false); // Resetear confirmación si no hay manos
+        startCountdown(); // Iniciar cuenta regresiva de reinicio
+      }
     }
   }, [predicciones]);
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
