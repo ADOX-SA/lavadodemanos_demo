@@ -201,6 +201,50 @@ export default function Home() {
   };
 
 
+  const skipCurrentStep = () => {
+    setCurrentStep((prevStep) => {
+      const nextStep = prevStep + 1;
+      console.log("⏩ Saltando del paso", prevStep, "al", nextStep);
+  
+      setCompletedSteps((prev) =>
+        prev.map((v, i) => (i === prevStep ? true : v))
+      );
+  
+      setAverages((prev) => {
+        const newAverages = [...prev];
+        newAverages[prevStep] = 100;
+        return newAverages;
+      });
+  
+      if (nextStep < labels.length) {
+        resetTimer();
+        pauseTimer();
+        return nextStep;
+      } else {
+        // Si ya estamos en el último paso, finalizar
+        stopDetectionRef.current?.();
+        canvasRef.current
+          ?.getContext("2d")
+          ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  
+        setInitializing(false);
+        resetTimer();
+        pauseTimer();
+        setStepConfirmed(false);
+        setShowFinalMessage(true);
+        startCountdown();
+  
+        // confetti({
+        //   particleCount: 150,
+        //   spread: 100,
+        //   origin: { y: 0.6 },
+        // });
+  
+        return prevStep; // No avanzar más allá
+      }
+    });
+  };
+
   // TODO: Arreglar esto...
   // Manejo de la tecla Enter para reiniciar el proceso al finalizar:
   // Usamos una ref para leer el valor actualizado de `showFinalMessage`
@@ -218,8 +262,9 @@ export default function Home() {
         stopCountdown();
         resetProcess();
       }
-      if(event.key === "Space") {
+      if(event.key === " ") {
         // hacer funcion que salte el paso actual.
+        skipCurrentStep();
       }
     };
     window.addEventListener("keydown", handleKeyPress);
