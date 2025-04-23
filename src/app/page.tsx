@@ -104,7 +104,7 @@ export default function Home() {
   ).toFixed(1);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
 
-  const startDetection = () => {
+  const startDetection = () => { 
     if (!cameraRef.current || !canvasRef.current || !model) return;
   
     webcam.open(cameraRef.current);
@@ -119,7 +119,7 @@ export default function Home() {
       (pred) => setPredicciones(pred)
     );
   };
-
+//aca
   const skipCurrentStep = () => {
     setCompletedSteps((prev) =>
       prev.map((v, i) => (i === currentStep ? true : v))
