@@ -15,6 +15,7 @@ import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
+import confetti from "canvas-confetti";
 
 // import io from "socket.io-client";
 
@@ -52,14 +53,21 @@ export default function Home() {
       setInitializing(false);
       resetTimer();
       pauseTimer();
-      setStepScores((prev) => {
-        const newScores = [...prev];
-        newScores[currentStep] = [];
-        return newScores;
-      });
+
+      // se hace en resetProcess()
+      // setStepScores((prev) => {
+      //   const newScores = [...prev];
+      //   newScores[currentStep] = [];
+      //   return newScores;
+      // });
       setStepConfirmed(false);
       setShowFinalMessage(true); // 👈 Mostrá el mensaje final
       startCountdown(); // 👈 Iniciá la cuenta regresiva
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+      });
       // Resetear confirmación al finalizar el tiempo
     }
   });
@@ -96,7 +104,59 @@ export default function Home() {
   ).toFixed(1);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
 
+  const startDetection = () => {
+    if (!cameraRef.current || !canvasRef.current || !model) return;
+  
+    webcam.open(cameraRef.current);
+    cameraRef.current.style.display = "block";
+    setStreaming("camera");
+  
+    stopDetectionRef.current = detectVideo(
+      cameraRef.current,
+      model,
+      canvasRef.current,
+      allowedTrust,
+      (pred) => setPredicciones(pred)
+    );
+  };
 
+  const skipCurrentStep = () => {
+    setCompletedSteps((prev) =>
+      prev.map((v, i) => (i === currentStep ? true : v))
+    );
+  
+    setAverages((prev) => {
+      const newAverages = [...prev];
+      newAverages[currentStep] = 100; // Podés poner 100 como valor simbólico
+      return newAverages;
+    });
+  
+    if (currentStep < labels.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+      resetTimer();
+      pauseTimer();
+    } else {
+      // Último paso, cerrar proceso como si estuviera completo
+      stopDetectionRef.current?.();
+      canvasRef.current
+        ?.getContext("2d")
+        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  
+      setInitializing(false);
+      resetTimer();
+      pauseTimer();
+      setStepConfirmed(false);
+      setShowFinalMessage(true);
+      startCountdown();
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+      });
+    }
+  };
+  
+  
   // const socket = io('http://localhost:4000');
 
   // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
@@ -104,30 +164,27 @@ export default function Home() {
   useEffect(() => {
     if (predicciones.length > 0) {
       if (currentStep < labels.length - 1) {
-        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva de reinicio si hay detección válida
+        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva si hay actividad
       }
   
-      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar el contador de frames sin detección
+      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar contador de inactividad
   
-      // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
+      // 🎯 Boost al paso actual, penalización al resto
       const boostedPredicciones = predicciones.map((p) => {
         if (p.clase === labels[currentStep]) {
-          // BOOST al paso actual
           return {
             ...p,
-            score: Math.min(p.score + 30, 100),
+            score: Math.min(p.score + 30, 100), // BOOST paso actual
           };
         } else {
-          // PENALIZACIÓN a los otros pasos
           return {
             ...p,
-            score: Math.max(p.score - 70, 0), // Asegurarse que no baje de 0
+            score: Math.max(p.score - 40, 0), // Penalización controlada
           };
         }
       });
-      
   
-      // 🔍 Determinar la mejor predicción
+      // 🔍 Obtener la mejor predicción post-ajuste
       const bestPrediction = boostedPredicciones.reduce(
         (max, p) => (p.score > max.score ? p : max),
         boostedPredicciones[0]
@@ -138,15 +195,22 @@ export default function Home() {
       const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
   
+      // ✅ Confirmar paso válido e iniciar temporizador
       if (isValid && !stepConfirmed) {
         console.log("✅ Paso válido detectado, inicializando...");
         if (currentStep < labels.length - 1) {
           setInitializing(true);
         }
-        setStepConfirmed(true); // Confirmamos este paso
-        startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
+        setStepConfirmed(true);
+        startTimer();
       }
   
+      // ⛳ Finalizar estado de inicialización una vez validado
+      if (stepConfirmed && isCurrentStep && initializing) {
+        setInitializing(false);
+      }
+  
+      // 📈 Acumular score del paso actual para calcular el promedio
       if (stepConfirmed && isCurrentStep) {
         console.log("📈 Acumulando score para promedio del paso actual");
         setStepScores((prev) => {
@@ -159,7 +223,7 @@ export default function Home() {
         });
       }
     } else {
-      // 📉 Si no se detecta nada, acumulamos frames sin manos
+      // 📉 Si no hay predicciones, aumentamos contador de inactividad
       if (!initializing) return;
   
       console.log("👋 No se detectan manos, acumulando frames vacíos");
@@ -169,10 +233,11 @@ export default function Home() {
         console.log("🔁 Pausando por inactividad");
         pauseTimer();
         setStepConfirmed(false);
-        startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
+        startCountdown(); // 🕒 Iniciar cuenta regresiva para reinicio
       }
     }
   }, [predicciones]);
+  
   
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
@@ -256,25 +321,27 @@ export default function Home() {
     setStepConfirmed(false);
     setInitializing(false);
     setShowFinalMessage(false);
+    startDetection(); // ⬅️ Reiniciamos la cámara y el modelo al final
   };
-
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
-      webcam.open(cameraRef.current!);
-      cameraRef.current!.style.display = "block";
-      setStreaming("camera");
+    startDetection(); // 🔁 Cámara y modelo activos desde el inicio
+  
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter" ) {
+      if (event.key === "Enter") {
         stopCountdown();
-        resetProcess();
+        resetProcess(); // Esto también llamará a startDetection internamente
       }
-      if(event.key === "Space") {
-        // hacer funcion que salte el paso actual.
+      if (event.key === " ") {
+        // Hacer función para saltar paso actual
+        skipCurrentStep();
       }
     };
+  
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [resetProcess, stopCountdown, webcam]);
+  }, []);
+  
   
   return (
     <div className={style.centeredGrid}>
