@@ -25,11 +25,10 @@ const useCountdown = ({
     // Inicia el intervalo y guarda la referencia
     intervalRef.current = setInterval(() => {
       setCountdownTimeLeft((prev) => {
-        const newTimeLeft = prev - 1;
+        const newTimeLeft = prev > 0 ? prev - 1 : 0 // Asegúrate de que no sea negativo;
         onChange?.(newTimeLeft); // Llama a onChange con el nuevo tiempo restante
         console.log("newTimeLeft", newTimeLeft);
-        // Agregue esto porque al saltar los pasos pasa a ser negativo y no se detiene.
-        if (newTimeLeft <= 0 && newTimeLeft > -1) {
+        if (newTimeLeft === 0) {
           clearInterval(intervalRef.current!); // Limpia el intervalo cuando el tiempo se agota
           intervalRef.current = null;
           setIsCountdownActive(false);
