@@ -19,7 +19,7 @@ import { BorderTimer } from "@/components/BorderTimer";
 // import io from "socket.io-client";
 
 export default function Home() {
-  const allowedTrust = 50;
+  const allowedTrust = 40;
   const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(2, () => {
     soundSuccess();
     const currentStepScores = stepScores[currentStep];
@@ -104,28 +104,44 @@ export default function Home() {
   useEffect(() => {
     if (predicciones.length > 0) {
       if (currentStep < labels.length - 1) {
-        stopCountdown(); //Esto rompe el temporizador del cartel de reinicio, y queda el cartel fijo en x segundos.
-        // Porque cuando esta el cartel de reinicio, si detecta calquier paso activa esta funcion y cambia el valor del reinicio.
+        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva de reinicio si hay detección válida
       }
-      setConsecutiveNoHandsFrames(0); // Reiniciar el contador de frames sin detección
-      const bestPrediction = predicciones.reduce((max, p) => (p.score > max.score ? p : max), predicciones[0]);
+  
+      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar el contador de frames sin detección
+  
+      // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
+      const boostedPredicciones = predicciones.map((p) => {
+        if (p.clase === labels[currentStep]) {
+          return {
+            ...p,
+            score: Math.min(p.score + 40, 100), // 🛡️ No pasarse del máximo
+          };
+        }
+        return p;
+      });
+  
+      // 🔍 Determinar la mejor predicción
+      const bestPrediction = boostedPredicciones.reduce(
+        (max, p) => (p.score > max.score ? p : max),
+        boostedPredicciones[0]
+      );
+  
+      console.log("🚀 Best prediction (with boost if applicable):", bestPrediction);
+  
       const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-
-      console.log("Clase:", bestPrediction.clase, "- Score:", bestPrediction.score);
-      
+  
       if (isValid && !stepConfirmed) {
-        console.log("Si es valido y no esta confirmado.");
+        console.log("✅ Paso válido detectado, inicializando...");
         if (currentStep < labels.length - 1) {
-          console.log("Si es menor al paso 6. Inicializando...");
           setInitializing(true);
         }
-        setStepConfirmed(true); // Confirmar el paso actual
-        startTimer(); // Inicia el temporizador al confirmar el paso
+        setStepConfirmed(true); // Confirmamos este paso
+        startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
       }
+  
       if (stepConfirmed && isCurrentStep) {
-        console.log("Si es el paso actual y ya esta confirmado.");
-        // Acumular scores solo si es el paso actual (aunque el score sea bajo)
+        console.log("📈 Acumulando score para promedio del paso actual");
         setStepScores((prev) => {
           const newScores = [...prev];
           newScores[currentStep] = [
@@ -135,19 +151,22 @@ export default function Home() {
           return newScores;
         });
       }
-    }
-    // Si no esta detectando nada durante 5 frames
-    else {
+    } else {
+      // 📉 Si no se detecta nada, acumulamos frames sin manos
       if (!initializing) return;
-      console.log("entro aca");
+  
+      console.log("👋 No se detectan manos, acumulando frames vacíos");
       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
+  
       if (consecutiveNoHandsFrames >= 5) {
-        pauseTimer(); // Pausar el temporizador si no se detecta movimiento
-        setStepConfirmed(false); // Resetear confirmación si no hay manos
-        startCountdown(); // Iniciar cuenta regresiva de reinicio
+        console.log("🔁 Pausando por inactividad");
+        pauseTimer();
+        setStepConfirmed(false);
+        startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
       }
     }
   }, [predicciones]);
+  
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
   // Manejo de detección y tiempos
