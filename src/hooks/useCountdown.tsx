@@ -28,7 +28,7 @@ const useCountdown = ({
         const newTimeLeft = prev > 0 ? prev - 1 : 0 // Asegúrate de que no sea negativo;
         onChange?.(newTimeLeft); // Llama a onChange con el nuevo tiempo restante
         console.log("newTimeLeft", newTimeLeft);
-        if (newTimeLeft === 0) {
+        if (newTimeLeft <= 0) {
           clearInterval(intervalRef.current!); // Limpia el intervalo cuando el tiempo se agota
           intervalRef.current = null;
           setIsCountdownActive(false);
