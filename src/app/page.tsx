@@ -19,7 +19,7 @@ import confetti from "canvas-confetti";
 
 export default function Home() {
   const allowedTrust = 40;
-  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(2, () => {
+  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(5, () => {
     soundSuccess();
     const currentStepScores = stepScores[currentStep];
     const average =
