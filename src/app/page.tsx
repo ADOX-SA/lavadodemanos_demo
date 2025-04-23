@@ -200,6 +200,8 @@ export default function Home() {
     setShowFinalMessage(false);
   };
 
+
+  // TODO: Arreglar esto...
   // Manejo de la tecla Enter para reiniciar el proceso al finalizar:
   // Usamos una ref para leer el valor actualizado de `showFinalMessage`
   // porque de la otra forma, al llegar al final y al reiniciar, la detección de fotogramas se detiene. Nose que onda con eso D:
