@@ -184,7 +184,7 @@
 
 .finalMessage {
   position: absolute;
-  top: 5px;
+  top: 14px;
   left: 960px;
   width: 26%;
   height: 95%;
@@ -210,4 +210,31 @@
 .finalMessage h3{
   font-weight: 500;
   font-size: 32px;
+}
+@media (max-width: 768px) {
+  .warningMessage,
+  .finalMessage {
+    left: 200px;
+    width: 480px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .warningMessage {
+    left: 452px;
+    width: 480px;
+  }
+
+  .finalMessage {
+    left: 454px;
+    width: 480px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .warningMessage,
+  .finalMessage {
+    left: 720px;
+    width: 480px;
+  }
 }
