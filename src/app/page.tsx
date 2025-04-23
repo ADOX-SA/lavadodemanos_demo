@@ -15,8 +15,7 @@ import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
-
-// import io from "socket.io-client";
+import confetti from "canvas-confetti";
 
 export default function Home() {
   const allowedTrust = 40;
@@ -91,10 +90,6 @@ export default function Home() {
   ).toFixed(1);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
 
-
-  // const socket = io('http://localhost:4000');
-
-  // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
 
   useEffect(() => {
     if (predicciones.length > 0) {
@@ -182,8 +177,6 @@ export default function Home() {
     }
   }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
 
-  // Validar paso al terminar el tiempo
-
   // Resetea todo a los valores inciales.
   const resetProcess = () => {
     console.log("Reiniciando todo el proceso...");
@@ -200,7 +193,7 @@ export default function Home() {
     setShowFinalMessage(false);
   };
 
-
+  // Pasa al paso sigueinte, sino hay siguiente reinicia todo el proceso.
   const skipCurrentStep = () => {
     setCurrentStep((prevStep) => {
       const nextStep = prevStep + 1;
@@ -234,11 +227,11 @@ export default function Home() {
         setShowFinalMessage(true);
         startCountdown();
   
-        // confetti({
-        //   particleCount: 150,
-        //   spread: 100,
-        //   origin: { y: 0.6 },
-        // });
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+        });
   
         return prevStep; // No avanzar más allá
       }
