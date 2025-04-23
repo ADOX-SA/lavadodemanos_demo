@@ -172,17 +172,7 @@ export default function Home() {
         startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
       }
     }
-  }, [
-    predicciones,
-    consecutiveNoHandsFrames,
-    currentStep,
-    initializing,
-    pauseTimer,
-    startCountdown,
-    startTimer,
-    stepConfirmed,
-    stopCountdown,
-  ]);
+  }, [predicciones]);
   
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
@@ -242,7 +232,7 @@ export default function Home() {
   useEffect(() => {
     setStepConfirmed(false);
     pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
-  }, [currentStep, pauseTimer]);
+  }, [currentStep]);
 
   // Manejar reinicio por inactividad
   useEffect(() => {
@@ -250,10 +240,10 @@ export default function Home() {
       pauseTimer();
       startCountdown(); // Iniciar cuenta regresiva de reinicio
     }
-  }, [consecutiveNoHandsFrames, isCountdownActive, initializing, pauseTimer, startCountdown]);
+  }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
 
   // Resetea todo a los valores inciales.
-  const resetProcess = React.useCallback(() => {
+  const resetProcess = () => {
     console.log("Reiniciando todo el proceso...");
     setCurrentStep(0);
     setCompletedSteps(new Array(labels.length).fill(false));
@@ -266,7 +256,7 @@ export default function Home() {
     setStepConfirmed(false);
     setInitializing(false);
     setShowFinalMessage(false);
-  }, [resetTimer, pauseTimer, stopCountdown]);
+  };
 
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
