@@ -15,7 +15,7 @@ import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
-import confetti from "canvas-confetti";
+// import confetti from "canvas-confetti";
 
 // import io from "socket.io-client";
 
@@ -63,11 +63,11 @@ export default function Home() {
       setStepConfirmed(false);
       setShowFinalMessage(true); // 👈 Mostrá el mensaje final
       startCountdown(); // 👈 Iniciá la cuenta regresiva
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-      });
+      // confetti({
+      //   particleCount: 150,
+      //   spread: 100,
+      //   origin: { y: 0.6 },
+      // });
       // Resetear confirmación al finalizar el tiempo
     }
   });
@@ -121,6 +121,13 @@ export default function Home() {
   };
 //aca
   const skipCurrentStep = () => {
+    console.log("Valida => ",(1 === currentStep ? true : false));
+    console.log("Valida => ",(2 === currentStep ? true : false));
+    console.log("Valida => ",(3 === currentStep ? true : false));
+    console.log("Valida => ",(4 === currentStep ? true : false));
+    console.log("Valida => ",(6 === currentStep ? true : false));
+    console.log("Valida => ",(6 === currentStep ? true : false));
+    console.log(currentStep);
     setCompletedSteps((prev) =>
       prev.map((v, i) => (i === currentStep ? true : v))
     );
@@ -148,11 +155,11 @@ export default function Home() {
       setStepConfirmed(false);
       setShowFinalMessage(true);
       startCountdown();
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-      });
+      // confetti({
+      //   particleCount: 150,
+      //   spread: 100,
+      //   origin: { y: 0.6 },
+      // });
     }
   };
   
