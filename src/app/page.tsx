@@ -54,7 +54,11 @@ export default function Home() {
       setStepConfirmed(false);
       setShowFinalMessage(true); // 👈 Mostrá el mensaje final
       startCountdown(); // 👈 Iniciá la cuenta regresiva
-      // Resetear confirmación al finalizar el tiempo
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+      });
     }
   });
   const { loading, model } = useAiModelContext();
