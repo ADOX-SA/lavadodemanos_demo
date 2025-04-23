@@ -20,7 +20,7 @@ import { BorderTimer } from "@/components/BorderTimer";
 
 export default function Home() {
   const allowedTrust = 50;
-  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(8, () => {
+  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(2, () => {
     soundSuccess();
     const currentStepScores = stepScores[currentStep];
     const average =
@@ -64,12 +64,7 @@ export default function Home() {
     }
   });
   const { loading, model } = useAiModelContext();
-  const {
-    countdownTimeLeft,
-    startCountdown,
-    stopCountdown,
-    isCountdownActive,
-  } = useCountdown({
+  const { countdownTimeLeft, startCountdown, stopCountdown, isCountdownActive } = useCountdown({
     duration: 20,
     onComplete: () => {
       resetProcess();
@@ -85,12 +80,8 @@ export default function Home() {
 
   const [streaming, setStreaming] = useState<"camera" | null>(null);
   const [consecutiveNoHandsFrames, setConsecutiveNoHandsFrames] = useState(0);
-  const [stepScores, setStepScores] = useState<number[][]>(
-    new Array(labels.length).fill([]).map(() => [])
-  );
-  const [averages, setAverages] = useState<number[]>(
-    new Array(labels.length).fill(0)
-  );
+  const [stepScores, setStepScores] = useState<number[][]>(new Array(labels.length).fill([]).map(() => []));
+  const [averages, setAverages] = useState<number[]>(new Array(labels.length).fill(0));
   const [stepConfirmed, setStepConfirmed] = useState(false);
   const [initializing, setInitializing] = useState(false);
 
@@ -112,21 +103,15 @@ export default function Home() {
 
   useEffect(() => {
     if (predicciones.length > 0) {
-      stopCountdown();
+      // stopCountdown(); Esto rompe el temporizador, y queda el cartel fijo en x segundos.
       setConsecutiveNoHandsFrames(0); // Reiniciar el contador de frames sin detección
       const bestPrediction = predicciones.reduce(
         (max, p) => (p.score > max.score ? p : max),
         predicciones[0]
       );
-      const isCurrentStep =
-        labels.indexOf(bestPrediction.clase) === currentStep;
+      const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-      console.log(
-        "Clase:",
-        bestPrediction.clase,
-        "- Score:",
-        bestPrediction.score
-      );
+      console.log("Clase:", bestPrediction.clase, "- Score:", bestPrediction.score);
       if (isValid && !stepConfirmed) {
         console.log("aca");
         if (currentStep < labels.length - 1) {
@@ -153,11 +138,11 @@ export default function Home() {
       if (!initializing) return;
       console.log("entro aca");
       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-      if (consecutiveNoHandsFrames >= 5) {
-        pauseTimer(); // Pausar el temporizador si no se detecta movimiento
-        setStepConfirmed(false); // Resetear confirmación si no hay manos
-        startCountdown(); // Iniciar cuenta regresiva de reinicio
-      }
+      // if (consecutiveNoHandsFrames >= 5) {
+      //   pauseTimer(); // Pausar el temporizador si no se detecta movimiento
+      //   setStepConfirmed(false); // Resetear confirmación si no hay manos
+      //   startCountdown(); // Iniciar cuenta regresiva de reinicio
+      // }
     }
   }, [predicciones]);
   // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
@@ -242,99 +227,21 @@ export default function Home() {
     setAverages(new Array(labels.length).fill(0));
     setStepConfirmed(false);
     setInitializing(false);
+    setShowFinalMessage(false);
   };
 
-  // Manejo de cámara
-  // useEffect(() => {
-  //   const handleKeyPress = (event: KeyboardEvent) => {
-  //     if (event.key === "Enter") {
-  //       if (!streaming) {
-  //         webcam.open(cameraRef.current!);
-  //         cameraRef.current!.style.display = "block";
-  //         setStreaming("camera");
-  //       } else {
-  //         webcam.close(cameraRef.current!);
-  //         cameraRef.current!.style.display = "none";
-  //         setStreaming(null);
-
-  //         stopDetectionRef.current?.();
-  //         canvasRef.current
-  //           ?.getContext("2d")
-  //           ?.clearRect(
-  //             0,
-  //             0,
-  //             canvasRef.current.width,
-  //             canvasRef.current.height
-  //           );
-  //       }
-  //     }
-  //   };
-  //   document.addEventListener("keydown", handleKeyPress);
-  //   return () => document.removeEventListener("keydown", handleKeyPress);
-  // }, [streaming]);
-
-
-  useEffect(() => {
-    // Abre la cámara automáticamente al montar el componente
-    webcam.open(cameraRef.current!);
-    cameraRef.current!.style.display = "block";
-    setStreaming("camera");
-  
-    // return () => {
-    //   // Limpieza: cerrar cámara y limpiar canvas
-    //   webcam.close(cameraRef.current!);
-    //   cameraRef.current!.style.display = "none";
-    //   setStreaming(null);
-  
-    //   stopDetectionRef.current?.();
-    //   canvasRef.current
-    //     ?.getContext("2d")
-    //     ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    // };
-  }, []);
-
-  // Manejo de cámara con sockets ejemplo
-  {/*
-      useEffect(() => {
-    // Escucha el evento 'activarCamara' desde el backend
-    socket.on("activarCamara", (data) => {
-      console.log("Evento recibido:", data);
-      if (!streaming) {
-        // Abre la cámara y muestra el elemento
-        webcam.open(cameraRef.current);
-        cameraRef.current.style.display = "block";
-        setStreaming("camera");
-      } else {
-        // Cierra la cámara y oculta el elemento
-        webcam.close(cameraRef.current);
-        cameraRef.current.style.display = "none";
-        setStreaming(null);
-
-        // Detén la detección si está corriendo
-        stopDetectionRef.current?.();
-        canvasRef.current
-          ?.getContext("2d")
-          ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      }
-    });
-
-    // Limpieza para eliminar el listener cuando el componente se desmonte
-    return () => {
-      socket.off("activarCamara");
-    };
-  }, [streaming]);
-  */}
 
   // Manejo de teclado para reiniciar el proceso al presionar Enter
   useEffect(() => {
+      webcam.open(cameraRef.current!);
+      cameraRef.current!.style.display = "block";
+      setStreaming("camera");
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Enter" && showFinalMessage) {
-        stopCountdown();     // Cancelar la cuenta regresiva si Enter fue presionado
-        resetProcess();      // Reiniciar el proceso
-        setShowFinalMessage(false); // Ocultar el mensaje final
+        stopCountdown();
+        resetProcess();
       }
     };
-  
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [showFinalMessage]);
@@ -430,13 +337,13 @@ export default function Home() {
                   if (!cameraRef.current || !canvasRef.current || !model)
                     return;
                   if (stopDetectionRef.current) stopDetectionRef.current();
-                  stopDetectionRef.current = detectVideo(
-                    cameraRef.current,
-                    model,
-                    canvasRef.current,
-                    allowedTrust,
-                    (pred) => setPredicciones(pred)
-                  );
+                    stopDetectionRef.current = detectVideo(
+                      cameraRef.current,
+                      model,
+                      canvasRef.current,
+                      allowedTrust,
+                      (pred) => setPredicciones(pred)
+                    );
                 }}
                 style={{
                   width: "100%",
