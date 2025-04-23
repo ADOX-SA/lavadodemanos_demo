@@ -43,12 +43,7 @@ export default function Home() {
       resetTimer(); // Reinicia el temporizador para el siguiente paso
       pauseTimer();
     } else {
-      //TODO: Valida el ultimo paso y apaga la camara, pone un cartel inidicando que se reinicia en x cantidad de tiempo.
-      stopDetectionRef.current?.();
-      canvasRef.current
-        ?.getContext("2d")
-        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
+      //TODO: Valida el ultimo paso, pone un cartel inidicando que se reinicia en x cantidad de tiempo.
       setInitializing(false);
       resetTimer();
       pauseTimer();
@@ -205,7 +200,13 @@ export default function Home() {
     setShowFinalMessage(false);
   };
 
-  // Manejo de teclado para reiniciar el proceso al presionar Enter al final.
+  // Manejo de la tecla Enter para reiniciar el proceso al finalizar:
+  // Usamos una ref para leer el valor actualizado de `showFinalMessage`
+  // porque de la otra forma, al llegar al final y al reiniciar, la detección de fotogramas se detiene. Nose que onda con eso D:
+  // Intenté lo que hizo Jorge de separar la lógica en una función `startDetection()` independiente,
+  // pero cada llamada adicional abría múltiples instancias de detección simultáneas,
+  // lo que provocaba que el programa ejecutara varias funciones idénticas y saturara la consola. Cosa que nose porque tampoco.
+  // Aparentemete con eso no se rompe, pero no es la mejor manera la verdad.
   useEffect(() => {
     webcam.open(cameraRef.current!);
     cameraRef.current!.style.display = "block";
