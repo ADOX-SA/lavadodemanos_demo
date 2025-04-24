@@ -312,7 +312,6 @@ export default function Home() {
               {completedSteps.every((v) => v) ? (
                 <div className={style.averages}>
                   <h3>Promedios de precisión por paso:</h3>
-
                   {fixedAverages.map((avg, index) => (
                     <div key={index} className={style.progressItem}>
                       <p>Paso {index + 1}: {avg.toFixed(1)}%</p>
@@ -324,7 +323,6 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
-
                   <div className={style.generalAverage}>
                     <h4>Promedio general de lavado de manos: {generalAverage}%</h4>
                   </div>
@@ -346,7 +344,6 @@ export default function Home() {
                 </video>
               )}
         </div>
-
           </div>
           <div>
             <div className={style.cameraContainer}>
@@ -365,7 +362,8 @@ export default function Home() {
                       allowedTrust,
                       (pred) => setPredicciones(pred)
                     );
-                }}
+                  }
+                }
                 style={{
                   width: "100%",
                   height: "100%",
@@ -373,25 +371,27 @@ export default function Home() {
                   transform: "rotate(180deg)", // Rota 180 grados el video
                 }}
               />
+              {/* Mensaje de inactividad */}
+              {countdownTimeLeft > 0 && (
+                <div className={style.warningMessage}>
+                  <h3>Sin actividad reconocida</h3>
+                  <EyeOffIcon size={120} />
+                  <p>Reinicio en {countdownTimeLeft}s.</p>
+                </div>
+              )}
+
+              {/* Mensaje final */}
+              {showFinalMessage && (
+                <div className={style.finalMessage}>
+                  <p>¡Proceso de lavado completo! 🙌</p>
+                  <h3>Reinicio en {countdownTimeLeft}s.</h3>
+                  <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
+                </div>
+              )}
               <BorderTimer timeLeft={timeLeft} initialTime={8} />
             </div>
             <canvas ref={canvasRef} style={{ display: "none" }} />
-
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
-            {countdownTimeLeft > 0 && (
-              <div className={style.warningMessage}>
-                <h3>Sin actividad reconocida</h3>
-                <EyeOffIcon size={120} />
-                <p>Reinicio en {countdownTimeLeft}s.</p>
-              </div>
-            )}
-            {showFinalMessage && (
-              <div className={style.finalMessage}>
-                <p>¡Proceso de lavado completo! 🙌</p>
-                <h3>Reinicio en {countdownTimeLeft}s.</h3>
-                <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
