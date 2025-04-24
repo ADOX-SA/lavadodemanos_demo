@@ -162,7 +162,7 @@ export default function Home() {
   useEffect(() => {
     // setStepConfirmed(false); Esto creo que esta de mas, ya que se reinicia al cambiar de paso.
     pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
-  }, [currentStep]);
+  }, [currentStep, pauseTimer]);
 
   // Manejar reinicio por inactividad
   useEffect(() => {
