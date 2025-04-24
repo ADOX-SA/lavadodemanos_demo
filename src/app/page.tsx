@@ -373,6 +373,7 @@ export default function Home() {
               />
 
               {/* 2) El canvas (overlay para dibujar detecciones) */}
+              {/* <canvas ref={canvasRef} style={{ display: "none" }} /> */}
               <canvas
                 ref={canvasRef}
                 style={{
@@ -408,10 +409,8 @@ export default function Home() {
               )}
             </div>
             
-            {/* <canvas ref={canvasRef} style={{ display: "none" }} /> */}
             {/* 6) Y fuera de la cámara puedes dejar el ProgressTime */}
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
-
           </div>
         </div>
       </div>
