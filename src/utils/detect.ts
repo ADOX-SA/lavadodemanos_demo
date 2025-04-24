@@ -83,7 +83,7 @@ export const detectAllClasses = async (
   const [modelWidth, modelHeight] = model.inputShape.slice(1, 3); // Obtener ancho y alto del modelo
 
   tf.engine().startScope(); // Iniciar scope de TensorFlow.js
-  const [input, xRatio, yRatio] = preprocess(source, modelWidth, modelHeight); // Preprocesar imagen
+  const [input] = preprocess(source, modelWidth, modelHeight); // Preprocesar imagen
 
   // Verificar si el tensor de entrada es nulo
   if (!input) {
@@ -94,7 +94,7 @@ export const detectAllClasses = async (
   const res = model.net.execute(input) as tf.Tensor<tf.Rank>; // Ejecutar inferencia
 
   const transRes = res.transpose([0, 2, 1]); // Transponer resultados
-  const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze(0); // Extraer scores
+  const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]); // Extraer scores
 
   const scores = [] as number[];
   for (let i = 0; i < numClass; i++) {
