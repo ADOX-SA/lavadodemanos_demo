@@ -371,6 +371,24 @@ export default function Home() {
                   transform: "rotate(180deg)", // Rota 180 grados el video
                 }}
               />
+
+              {/* 2) El canvas (overlay para dibujar detecciones) */}
+              <canvas
+                ref={canvasRef}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",    // para que no interfiera con clics
+                  zIndex: 2,
+                }}
+              />
+
+              {/* 3) El BorderTimer como borde alrededor del video */}
+              <BorderTimer timeLeft={timeLeft} initialTime={8} />
+
               {/* Mensaje de inactividad */}
               {countdownTimeLeft > 0 && (
                 <div className={style.warningMessage}>
@@ -388,10 +406,12 @@ export default function Home() {
                   <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
                 </div>
               )}
-              <BorderTimer timeLeft={timeLeft} initialTime={8} />
             </div>
-            <canvas ref={canvasRef} style={{ display: "none" }} />
+            
+            {/* <canvas ref={canvasRef} style={{ display: "none" }} /> */}
+            {/* 6) Y fuera de la cámara puedes dejar el ProgressTime */}
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
+
           </div>
         </div>
       </div>
