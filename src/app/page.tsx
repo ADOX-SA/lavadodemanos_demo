@@ -88,8 +88,10 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
-  const fixedAverages = averages.map(avg => (avg === 0 ? 0 : avg));
-  const generalAverage = (
+  const fixedAverages = averages.map(avg => 
+    avg === 0 ? 62.5 : (avg === 1 ? 0 : avg)
+  );
+    const generalAverage = (
   fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
   ).toFixed(1);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
@@ -203,7 +205,7 @@ export default function Home() {
   
       setAverages((prev) => {
         const newAverages = [...prev];
-        newAverages[prevStep] = 0;
+        newAverages[prevStep] = 1;
         return newAverages;
       });
   
@@ -240,6 +242,7 @@ export default function Home() {
   // Manejo de la tecla Enter para reiniciar el proceso al finalizar:
   // Usamos una ref para leer el valor actualizado de `showFinalMessage`
   // porque de la otra forma, al llegar al final y al reiniciar, la detección de fotogramas se detiene. Nose que onda con eso D:
+
   useEffect(() => {
     webcam.open(cameraRef.current!);
     cameraRef.current!.style.display = "block";

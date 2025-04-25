@@ -27,7 +27,7 @@ const useCountdown = ({
 
     const timerId = setInterval(() => {
       setCountdownTimeLeft((t) => Math.max(0, t - 1));
-    }, 850); 
+    }, 600); 
 
     return () => clearInterval(timerId);
   }, [isCountdownActive, countdownTimeLeft, onComplete]);
