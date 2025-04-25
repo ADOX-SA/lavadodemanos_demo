@@ -1,51 +1,52 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+interface UseCountdownProps {
+  duration: number;
+  onComplete?: () => void;
+  onChange?: (timeLeft: number) => void;
+}
 
 const useCountdown = ({
   duration,
   onComplete,
   onChange,
-}: {
-  duration: number;
-  onComplete?: () => void;
-  onChange?: (timeLeft: number) => void;
-}) => {
-  const [isCountdownActive, setIsCountdownActive] = useState(false);
+}: UseCountdownProps) => {
   const [countdownTimeLeft, setCountdownTimeLeft] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null); // Guarda la referencia del intervalo
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
 
-  const startCountdown = useCallback(() => {
-    if (isCountdownActive) {
+  // Maneja la cuenta atrás y dispara onComplete solo una vez al llegar a 0
+  useEffect(() => {
+    if (!isCountdownActive) return;
+
+    if (countdownTimeLeft === 0) {
+      onComplete?.();
+      setIsCountdownActive(false);
       return;
     }
 
-    setCountdownTimeLeft(duration);
-    setIsCountdownActive(true);
+    const timerId = setInterval(() => {
+      setCountdownTimeLeft((t) => Math.max(0, t - 1));
+    }, 850); 
 
-    // Inicia el intervalo y guarda la referencia
-    intervalRef.current = setInterval(() => {
-      setCountdownTimeLeft((prev) => {
-        const newTimeLeft = prev > 0 ? prev - 1 : 0 // Asegúrate de que no sea negativo;
-        onChange?.(newTimeLeft); // Llama a onChange con el nuevo tiempo restante
-        console.log("newTimeLeft", newTimeLeft);
-        if (newTimeLeft <= 0) {
-          clearInterval(intervalRef.current!); // Limpia el intervalo cuando el tiempo se agota
-          intervalRef.current = null;
-          setIsCountdownActive(false);
-          onComplete?.(); // Llama a onComplete cuando el tiempo se agota
-        }
-        return newTimeLeft;
-      });
-    }, 1000);
-  }, [duration, isCountdownActive, onChange, onComplete]);
+    return () => clearInterval(timerId);
+  }, [isCountdownActive, countdownTimeLeft, onComplete]);
+
+  // Notifica cada cambio de tiempo
+  useEffect(() => {
+    onChange?.(countdownTimeLeft);
+  }, [countdownTimeLeft, onChange]);
+
+  const startCountdown = useCallback(() => {
+    if (!isCountdownActive) {
+      setCountdownTimeLeft(duration);
+      setIsCountdownActive(true);
+    }
+  }, [duration, isCountdownActive]);
 
   const stopCountdown = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current); // Limpia el intervalo
-      intervalRef.current = null;
-    }
-    setCountdownTimeLeft(0);
     setIsCountdownActive(false);
+    setCountdownTimeLeft(0);
   }, []);
 
   return {
