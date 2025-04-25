@@ -88,7 +88,7 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
-  const fixedAverages = averages.map(avg => (avg === 0 ? 62.5 : avg));
+  const fixedAverages = averages.map(avg => (avg === 0 ? 0 : avg));
   const generalAverage = (
   fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
   ).toFixed(1);
@@ -203,7 +203,7 @@ export default function Home() {
   
       setAverages((prev) => {
         const newAverages = [...prev];
-        newAverages[prevStep] = 100;
+        newAverages[prevStep] = 0;
         return newAverages;
       });
   
