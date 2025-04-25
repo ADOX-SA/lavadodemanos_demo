@@ -88,7 +88,7 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
-  const fixedAverages = averages.map(avg => (avg === 0 ? 62.5 : avg));
+  const fixedAverages = averages.map(avg => (avg === 0 ? 0 : avg));
   const generalAverage = (
   fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
   ).toFixed(1);
@@ -134,9 +134,7 @@ export default function Home() {
   
       if (isValid && !stepConfirmed) {
         console.log("✅ Paso válido detectado, inicializando...");
-        if (currentStep < labels.length - 1) {
-          setInitializing(true);
-        }
+        setInitializing(true);
         setStepConfirmed(true); // Confirmamos este paso
         startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
       }
@@ -154,32 +152,28 @@ export default function Home() {
       }
     } else {
       // 📉 Si no se detecta nada, acumulamos frames sin manos
-      if (!initializing) return;
-  
-      console.log("👋 No se detectan manos, acumulando frames vacíos");
-      setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-  
-      if (consecutiveNoHandsFrames >= 5) {
-        console.log("🔁 Pausando por inactividad");
-        pauseTimer();
-        setStepConfirmed(false);
-        startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
+      if (initializing) {
+        console.log("👋 No se detectan manos, acumulando frames vacíos");
+        setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
       }
     }
   }, [predicciones]);
 
+  // Asegurar que el timer se reinicie al cambiar de paso
   useEffect(() => {
     setStepConfirmed(false);
-    pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
-  }, [currentStep]);
+    pauseTimer(); 
+  }, [currentStep, pauseTimer]);
 
   // Manejar reinicio por inactividad
   useEffect(() => {
-    if (consecutiveNoHandsFrames === 5 && !isCountdownActive && initializing) {
+    if (consecutiveNoHandsFrames >= 5 && !isCountdownActive && initializing) {
+      console.log("🔁 Pausando por inactividad");
       pauseTimer();
-      startCountdown(); // Iniciar cuenta regresiva de reinicio
+      setStepConfirmed(false);
+      startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
     }
-  }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
+  }, [consecutiveNoHandsFrames, isCountdownActive, initializing, pauseTimer, startCountdown,]);
 
   // Resetea todo a los valores inciales.
   const resetProcess = () => {
@@ -209,7 +203,7 @@ export default function Home() {
   
       setAverages((prev) => {
         const newAverages = [...prev];
-        newAverages[prevStep] = 100;
+        newAverages[prevStep] = 0;
         return newAverages;
       });
   
