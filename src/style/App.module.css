@@ -181,6 +181,10 @@
   padding: 20px;
 }
 
+.warningMessage {
+  background-color: rgba(0, 0, 0, 0.349);
+}
+
 /* Si querés tamaños de fuente distintos… */
 .warningMessage h3,
 .finalMessage h3 {
