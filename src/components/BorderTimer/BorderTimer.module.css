@@ -13,7 +13,7 @@
   .borderBottom,
   .borderLeft {
     position: absolute;
-    background-color: limegreen;
+    background-color: #AA4CF2;
     transition: all 1s linear;
   }
   

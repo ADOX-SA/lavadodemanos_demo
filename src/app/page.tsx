@@ -15,12 +15,11 @@ import useTimer from "@/hooks/useTimer";
 import { useAiModelContext } from "@/context/AiModelContext";
 import useCountdown from "@/hooks/useCountdown";
 import { BorderTimer } from "@/components/BorderTimer";
-
-// import io from "socket.io-client";
+import confetti from "canvas-confetti";
 
 export default function Home() {
-  const allowedTrust = 50;
-  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(8, () => {
+  const allowedTrust = 40;
+  const { startTimer, resetTimer, timeLeft, pauseTimer } = useTimer(5, () => {
     soundSuccess();
     const currentStepScores = stepScores[currentStep];
     const average =
@@ -43,33 +42,27 @@ export default function Home() {
       resetTimer(); // Reinicia el temporizador para el siguiente paso
       pauseTimer();
     } else {
-      //Valida el ultimo paso y apaga la camara.
-      webcam.close(cameraRef.current!);
-      cameraRef.current!.style.display = "none";
-      setStreaming(null);
-
-      stopDetectionRef.current?.();
-      canvasRef.current
-        ?.getContext("2d")
-        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      //TODO: Valida el ultimo paso, pone un cartel inidicando que se reinicia en x cantidad de tiempo.
       setInitializing(false);
-      resetTimer(); // Reinicia el temporizador si no se detectó la mano
+      resetTimer();
       pauseTimer();
       setStepScores((prev) => {
         const newScores = [...prev];
         newScores[currentStep] = [];
         return newScores;
       });
-      setStepConfirmed(false); // Resetear confirmación al finalizar el tiempo
+      setStepConfirmed(false);
+      setShowFinalMessage(true); // 👈 Mostrá el mensaje final
+      startCountdown(); // 👈 Iniciá la cuenta regresiva
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+      });
     }
   });
   const { loading, model } = useAiModelContext();
-  const {
-    countdownTimeLeft,
-    startCountdown,
-    stopCountdown,
-    isCountdownActive,
-  } = useCountdown({
+  const { countdownTimeLeft, startCountdown, stopCountdown, isCountdownActive } = useCountdown({
     duration: 20,
     onComplete: () => {
       resetProcess();
@@ -85,12 +78,8 @@ export default function Home() {
 
   const [streaming, setStreaming] = useState<"camera" | null>(null);
   const [consecutiveNoHandsFrames, setConsecutiveNoHandsFrames] = useState(0);
-  const [stepScores, setStepScores] = useState<number[][]>(
-    new Array(labels.length).fill([]).map(() => [])
-  );
-  const [averages, setAverages] = useState<number[]>(
-    new Array(labels.length).fill(0)
-  );
+  const [stepScores, setStepScores] = useState<number[][]>(new Array(labels.length).fill([]).map(() => []));
+  const [averages, setAverages] = useState<number[]>(new Array(labels.length).fill(0));
   const [stepConfirmed, setStepConfirmed] = useState(false);
   const [initializing, setInitializing] = useState(false);
 
@@ -99,44 +88,61 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcam = new Webcam();
 
-  const fixedAverages = averages.map(avg => (avg === 0 ? 62.5 : avg));
-const generalAverage = (
+  const fixedAverages = averages.map(avg => 
+    avg === 0 ? 62.5 : (avg === 1 ? 0 : avg)
+  );
+    const generalAverage = (
   fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
-).toFixed(1);
+  ).toFixed(1);
+  const [showFinalMessage, setShowFinalMessage] = useState(false);
 
-
-  // const socket = io('http://localhost:4000');
-
-  // Quiero que al detectar un movimiento valido de la mano, se inicie el temporizador y que al finalizar el tiempo, se reinicie el temporizador y se pase al siguiente paso.
 
   useEffect(() => {
     if (predicciones.length > 0) {
-      stopCountdown();
-      setConsecutiveNoHandsFrames(0); // Reiniciar el contador de frames sin detección
-      const bestPrediction = predicciones.reduce(
-        (max, p) => (p.score > max.score ? p : max),
-        predicciones[0]
-      );
-      const isCurrentStep =
-        labels.indexOf(bestPrediction.clase) === currentStep;
-      const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-      console.log(
-        "Clase:",
-        bestPrediction.clase,
-        "- Score:",
-        bestPrediction.score
-      );
-      if (isValid && !stepConfirmed) {
-        console.log("aca");
-        if (currentStep < labels.length - 1) {
-          setInitializing(true);
-        }
-        setStepConfirmed(true);
-        startTimer(); // Inicia el temporizador al confirmar el paso
+      if (currentStep < labels.length - 1) {
+        stopCountdown(); // ⏹️ Detenemos la cuenta regresiva de reinicio si hay detección válida
       }
+  
+      setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar el contador de frames sin detección
+  
+      // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
+      const boostedPredicciones = predicciones.map((p) => {
+        if (p.clase === labels[currentStep]) {
+          // BOOST al paso actual
+          return {
+            ...p,
+            score: Math.min(p.score + 30, 100),
+          };
+        } else {
+          // PENALIZACIÓN a los otros pasos
+          return {
+            ...p,
+            score: Math.max(p.score - 70, 0), // Asegurarse que no baje de 0
+          };
+        }
+      });
+      
+  
+      // 🔍 Determinar la mejor predicción
+      const bestPrediction = boostedPredicciones.reduce(
+        (max, p) => (p.score > max.score ? p : max),
+        boostedPredicciones[0]
+      );
+  
+      console.log("🚀 Best prediction (with boost if applicable):", bestPrediction);
+  
+      const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
+      const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
+  
+      if (isValid && !stepConfirmed) {
+        console.log("✅ Paso válido detectado, inicializando...");
+        setInitializing(true);
+        setStepConfirmed(true); // Confirmamos este paso
+        startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
+      }
+  
       if (stepConfirmed && isCurrentStep) {
-        console.log("aca");
-
+        console.log("📈 Acumulando score para promedio del paso actual");
         setStepScores((prev) => {
           const newScores = [...prev];
           newScores[currentStep] = [
@@ -146,87 +152,30 @@ const generalAverage = (
           return newScores;
         });
       }
-    }
-    // Si no esta detectando nada durante 5 frames
-    else {
-      if (!initializing) return;
-      console.log("entro aca");
-      setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-      if (consecutiveNoHandsFrames >= 5) {
-        pauseTimer(); // Pausar el temporizador si no se detecta movimiento
-        setStepConfirmed(false); // Resetear confirmación si no hay manos
-        startCountdown(); // Iniciar cuenta regresiva de reinicio
+    } else {
+      // 📉 Si no se detecta nada, acumulamos frames sin manos
+      if (initializing) {
+        console.log("👋 No se detectan manos, acumulando frames vacíos");
+        setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
       }
     }
   }, [predicciones]);
-  // Quiero que si no se detecta movimiento valido de la mano, se pause el temporizador y se inicie una cuenta regresiva de 8 segundos, si no se detecta movimiento valido de la mano en ese tiempo, se reinicie el temporizador y vuelva al primer paso.
 
-  // Manejo de detección y tiempos
-  // useEffect(() => {
-  //   if (predicciones.length === 0) {
-  //     if (!isCountdownActive) {
-  //       setConsecutiveNoHandsFrames((prev) => Math.min(prev + 1, 5));
-  //     }
-  //     setStepConfirmed(false); // Resetear confirmación si no hay manos
-  //   } else {
-  //     setConsecutiveNoHandsFrames(0);
-  //     if (isCountdownActive) {
-  //       stopCountdown();
-  //       // setRestartCountdown(0); // Reiniciar el contador de reinicio
-  //     }
-
-  //     const bestPrediction = predicciones.reduce(
-  //       (max, p) => (p.score > max.score ? p : max),
-  //       predicciones[0]
-  //     );
-  //     const isCurrentStep =
-  //       labels.indexOf(bestPrediction.clase) === currentStep;
-  //     const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-
-  //     console.log(
-  //       "Clase:",
-  //       bestPrediction.clase,
-  //       "- Score:",
-  //       bestPrediction.score
-  //     );
-
-  //     // Lógica de confirmación de paso
-  //     if (isValid && !stepConfirmed) {
-  //       // Activa el inicializador solo en los pasos que son menores al paso 6
-  //       if (currentStep < labels.length - 1) {
-  //         setInitializing(true);
-  //       }
-  //       setStepConfirmed(true);
-  //       startTimer(); // Inicia el temporizador al confirmar el paso
-  //     }
-
-  //     // Cambiar esto
-  //     // La idea del promedio seria, que tome la cantidad total de todos los pasos incluyendo el actual
-  //     // y que lo divida por la suma total del score del paso actual
-  //     // y que lo multiplique por 100 para obtener el porcentaje podria ser esta idea. Porque esta calculando mal el promedio, es mas la cuenta esta mal, siempre va a dar bien.
-
-  //     // Otra cosa que estaria bueno es hacer un informe al final del proceso de lavado
-  //     // de los pasos que se hicieron en total en cada uno de los pasos, y que se muestre el promedio de cada paso. Esto ayuda a tener un registro para ver que pasos se
-  //     // hicieron bien y cuales no.
-  //     // Acumular scores solo si es el paso actual (aunque el score sea bajo)
-  //   }
-  // }, [predicciones, currentStep, isCountdownActive, stepConfirmed]);
-
-  // Resetear confirmación al cambiar de paso
+  // Asegurar que el timer se reinicie al cambiar de paso
   useEffect(() => {
     setStepConfirmed(false);
-    pauseTimer(); // Asegurar que el timer se reinicie al cambiar de paso
-  }, [currentStep]);
+    pauseTimer(); 
+  }, [currentStep, pauseTimer]);
 
   // Manejar reinicio por inactividad
   useEffect(() => {
-    if (consecutiveNoHandsFrames === 5 && !isCountdownActive && initializing) {
+    if (consecutiveNoHandsFrames >= 5 && !isCountdownActive && initializing) {
+      console.log("🔁 Pausando por inactividad");
       pauseTimer();
-      startCountdown(); // Iniciar cuenta regresiva de reinicio
+      setStepConfirmed(false);
+      startCountdown(); // 🕒 Iniciamos cuenta regresiva para reiniciar
     }
-  }, [consecutiveNoHandsFrames, isCountdownActive, initializing]);
-
-  // Validar paso al terminar el tiempo
+  }, [consecutiveNoHandsFrames, isCountdownActive, initializing, pauseTimer, startCountdown,]);
 
   // Resetea todo a los valores inciales.
   const resetProcess = () => {
@@ -241,69 +190,77 @@ const generalAverage = (
     setAverages(new Array(labels.length).fill(0));
     setStepConfirmed(false);
     setInitializing(false);
+    setShowFinalMessage(false);
   };
 
-  // Manejo de cámara
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
-        if (!streaming) {
-          webcam.open(cameraRef.current!);
-          cameraRef.current!.style.display = "block";
-          setStreaming("camera");
-        } else {
-          webcam.close(cameraRef.current!);
-          cameraRef.current!.style.display = "none";
-          setStreaming(null);
-
-          stopDetectionRef.current?.();
-          canvasRef.current
-            ?.getContext("2d")
-            ?.clearRect(
-              0,
-              0,
-              canvasRef.current.width,
-              canvasRef.current.height
-            );
-        }
-      }
-    };
-    document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [streaming]);
-
-  // Manejo de cámara con sockets ejemplo
-  {/*
-      useEffect(() => {
-    // Escucha el evento 'activarCamara' desde el backend
-    socket.on("activarCamara", (data) => {
-      console.log("Evento recibido:", data);
-      if (!streaming) {
-        // Abre la cámara y muestra el elemento
-        webcam.open(cameraRef.current);
-        cameraRef.current.style.display = "block";
-        setStreaming("camera");
+  // Pasa al paso sigueinte, sino hay siguiente reinicia todo el proceso.
+  const skipCurrentStep = () => {
+    setCurrentStep((prevStep) => {
+      const nextStep = prevStep + 1;
+      console.log("⏩ Saltando del paso", prevStep, "al", nextStep);
+  
+      setCompletedSteps((prev) =>
+        prev.map((v, i) => (i === prevStep ? true : v))
+      );
+  
+      setAverages((prev) => {
+        const newAverages = [...prev];
+        newAverages[prevStep] = 1;
+        return newAverages;
+      });
+  
+      if (nextStep < labels.length) {
+        resetTimer();
+        pauseTimer();
+        return nextStep;
       } else {
-        // Cierra la cámara y oculta el elemento
-        webcam.close(cameraRef.current);
-        cameraRef.current.style.display = "none";
-        setStreaming(null);
-
-        // Detén la detección si está corriendo
+        // Si ya estamos en el último paso, finalizar
         stopDetectionRef.current?.();
         canvasRef.current
           ?.getContext("2d")
           ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  
+        setInitializing(false);
+        resetTimer();
+        pauseTimer();
+        setStepConfirmed(false);
+        setShowFinalMessage(true);
+        startCountdown();
+  
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+        });
+  
+        return prevStep; // No avanzar más allá
       }
     });
+  };
 
-    // Limpieza para eliminar el listener cuando el componente se desmonte
-    return () => {
-      socket.off("activarCamara");
+  // TODO: Arreglar esto...
+  // Manejo de la tecla Enter para reiniciar el proceso al finalizar:
+  // Usamos una ref para leer el valor actualizado de `showFinalMessage`
+  // porque de la otra forma, al llegar al final y al reiniciar, la detección de fotogramas se detiene. Nose que onda con eso D:
+
+  useEffect(() => {
+    webcam.open(cameraRef.current!);
+    cameraRef.current!.style.display = "block";
+    setStreaming("camera");
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Enter" ) {
+        stopCountdown();
+        resetProcess();
+      }
+      if(event.key === " ") {
+        // hacer funcion que salte el paso actual.
+        skipCurrentStep();
+      }
     };
-  }, [streaming]);
-  */}
-
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [showFinalMessage]);
+  
   return (
     <div className={style.centeredGrid}>
       {loading.loading && (
@@ -348,7 +305,6 @@ const generalAverage = (
               {completedSteps.every((v) => v) ? (
                 <div className={style.averages}>
                   <h3>Promedios de precisión por paso:</h3>
-
                   {fixedAverages.map((avg, index) => (
                     <div key={index} className={style.progressItem}>
                       <p>Paso {index + 1}: {avg.toFixed(1)}%</p>
@@ -360,7 +316,6 @@ const generalAverage = (
                       </div>
                     </div>
                   ))}
-
                   <div className={style.generalAverage}>
                     <h4>Promedio general de lavado de manos: {generalAverage}%</h4>
                   </div>
@@ -382,7 +337,6 @@ const generalAverage = (
                 </video>
               )}
         </div>
-
           </div>
           <div>
             <div className={style.cameraContainer}>
@@ -394,14 +348,15 @@ const generalAverage = (
                   if (!cameraRef.current || !canvasRef.current || !model)
                     return;
                   if (stopDetectionRef.current) stopDetectionRef.current();
-                  stopDetectionRef.current = detectVideo(
-                    cameraRef.current,
-                    model,
-                    canvasRef.current,
-                    allowedTrust,
-                    (pred) => setPredicciones(pred)
-                  );
-                }}
+                    stopDetectionRef.current = detectVideo(
+                      cameraRef.current,
+                      model,
+                      canvasRef.current,
+                      allowedTrust,
+                      (pred) => setPredicciones(pred)
+                    );
+                  }
+                }
                 style={{
                   width: "100%",
                   height: "100%",
@@ -409,18 +364,46 @@ const generalAverage = (
                   transform: "rotate(180deg)", // Rota 180 grados el video
                 }}
               />
-              <BorderTimer timeLeft={timeLeft} initialTime={8} />
-            </div>
-            <canvas ref={canvasRef} style={{ display: "none" }} />
 
+              {/* 2) El canvas (overlay para dibujar detecciones) */}
+              {/* <canvas ref={canvasRef} style={{ display: "none" }} /> */}
+              <canvas
+                ref={canvasRef}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",    // para que no interfiera con clics
+                  zIndex: 2,
+                }}
+              />
+
+              {/* 3) El BorderTimer como borde alrededor del video */}
+              <BorderTimer timeLeft={timeLeft} initialTime={8} />
+
+              {/* Mensaje de inactividad */}
+              {countdownTimeLeft > 0 && (
+                <div className={style.warningMessage}>
+                  <h3>Sin actividad reconocida</h3>
+                  <EyeOffIcon size={120} />
+                  <p>Reinicio en {countdownTimeLeft}s.</p>
+                </div>
+              )}
+
+              {/* Mensaje final */}
+              {showFinalMessage && (
+                <div className={style.finalMessage}>
+                  <p>¡Proceso de lavado completo! 🙌</p>
+                  <h3>Reinicio en {countdownTimeLeft}s.</h3>
+                  <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* 6) Y fuera de la cámara puedes dejar el ProgressTime */}
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
-            {countdownTimeLeft > 0 && (
-              <div className={style.warningMessage}>
-                <h3>Sin actividad reconocida</h3>
-                <EyeOffIcon size={120} />
-                <p>Reinicio en {countdownTimeLeft}s.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
