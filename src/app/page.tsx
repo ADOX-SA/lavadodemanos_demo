@@ -76,7 +76,7 @@ export default function Home() {
     { clase: string; score: number }[]
   >([]);
 
-  const [streaming, setStreaming] = useState<"camera" | null>(null);
+  const [, setStreaming] = useState<"camera" | null>(null);
   const [consecutiveNoHandsFrames, setConsecutiveNoHandsFrames] = useState(0);
   const [stepScores, setStepScores] = useState<number[][]>(new Array(labels.length).fill([]).map(() => []));
   const [averages, setAverages] = useState<number[]>(new Array(labels.length).fill(0));
