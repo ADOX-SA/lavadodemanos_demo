@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import "@tensorflow/tfjs-backend-webgl";
 import * as tf from "@tensorflow/tfjs";
 
@@ -31,37 +31,32 @@ export const AiModelContextProvider = ({
 
   useEffect(() => {
     let isMounted = true;
-
     tf.ready().then(async () => {
       try {
-        // 1) Carga del modelo desde public/hands_model/model.json
-        const graph = await tf.loadGraphModel(
-          `${window.location.origin}/${modelName}/model.json`,
+        const yolov8 = await tf.loadGraphModel(
+          `${window.location.href}/${modelName}/model.json`,
           {
-            onProgress: (frac) =>
-              isMounted && setLoading({ loading: true, progress: frac }),
+            onProgress: (fractions) =>
+              isMounted && setLoading({ loading: true, progress: fractions }),
           }
         );
 
-        // 2) Extracción y normalización de inputShape
-        const rawShape = graph.inputs?.[0]?.shape;
-        if (!rawShape || rawShape.length < 4) {
+        const inputShape = yolov8.inputs?.[0]?.shape;
+        if (!inputShape) {
           throw new Error("No se pudo obtener la forma del modelo.");
         }
-        const warmupShape = rawShape.map(dim => (dim === null ? 1 : dim)) as number[];
 
-        // 3) Warm-up asíncrono
-        const dummy = tf.ones(warmupShape);
-        await graph.executeAsync(dummy);
-        tf.dispose(dummy);
+        const dummyInput = tf.ones(inputShape);
+        const warmupResults = yolov8.execute(dummyInput);
 
-        // 4) Guardar en estado una vez caliente el modelo
         if (isMounted) {
           setLoading({ loading: false, progress: 1 });
-          setModel({ net: graph, inputShape: warmupShape });
+          setModel({ net: yolov8, inputShape });
         }
+
+        tf.dispose([warmupResults, dummyInput]);
       } catch (error) {
-        console.error("Error cargando o calentando el modelo:", error);
+        console.error("Error cargando el modelo:", error);
       }
     });
 
@@ -69,7 +64,6 @@ export const AiModelContextProvider = ({
       isMounted = false;
     };
   }, []);
-
   return (
     <AiModelContext.Provider
       value={{ model, loading, setLoading, setModel, modelName }}
@@ -82,9 +76,7 @@ export const AiModelContextProvider = ({
 export const useAiModelContext = () => {
   const context = useContext(AiModelContext);
   if (!context) {
-    throw new Error(
-      "useAiModelContext debe usarse dentro de un AiModelContextProvider"
-    );
+    throw new Error("useAiModelContext must be used within a AiModelProvider");
   }
   return context;
 };

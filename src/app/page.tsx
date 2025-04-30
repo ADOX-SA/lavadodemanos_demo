@@ -102,9 +102,9 @@ export default function Home() {
       if (currentStep < labels.length - 1) {
         stopCountdown(); // ⏹️ Detenemos la cuenta regresiva de reinicio si hay detección válida
       }
-  
+
       setConsecutiveNoHandsFrames(0); // 🧹 Reiniciar el contador de frames sin detección
-  
+
       // 🎯 Aplicar boost al paso actual si coincide (siempre), para mejorar la detección
       const boostedPredicciones = predicciones.map((p) => {
         if (p.clase === labels[currentStep]) {
@@ -121,26 +121,26 @@ export default function Home() {
           };
         }
       });
-      
-  
+
+
       // 🔍 Determinar la mejor predicción
       const bestPrediction = boostedPredicciones.reduce(
         (max, p) => (p.score > max.score ? p : max),
         boostedPredicciones[0]
       );
-  
+
       console.log("🚀 Best prediction (with boost if applicable):", bestPrediction);
-  
+
       const isCurrentStep = labels.indexOf(bestPrediction.clase) === currentStep;
       const isValid = bestPrediction.score >= allowedTrust && isCurrentStep;
-  
+
       if (isValid && !stepConfirmed) {
         console.log("✅ Paso válido detectado, inicializando...");
         setInitializing(true);
         setStepConfirmed(true); // Confirmamos este paso
         startTimer(); // ⏱️ Iniciamos el temporizador para validarlo
       }
-  
+
       if (stepConfirmed && isCurrentStep) {
         console.log("📈 Acumulando score para promedio del paso actual");
         setStepScores((prev) => {
@@ -198,17 +198,17 @@ export default function Home() {
     setCurrentStep((prevStep) => {
       const nextStep = prevStep + 1;
       console.log("⏩ Saltando del paso", prevStep, "al", nextStep);
-  
+
       setCompletedSteps((prev) =>
         prev.map((v, i) => (i === prevStep ? true : v))
       );
-  
+
       setAverages((prev) => {
         const newAverages = [...prev];
         newAverages[prevStep] = 1;
         return newAverages;
       });
-  
+
       if (nextStep < labels.length) {
         resetTimer();
         pauseTimer();
@@ -219,20 +219,20 @@ export default function Home() {
         canvasRef.current
           ?.getContext("2d")
           ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-  
+
         setInitializing(false);
         resetTimer();
         pauseTimer();
         setStepConfirmed(false);
         setShowFinalMessage(true);
         startCountdown();
-  
+
         confetti({
           particleCount: 150,
           spread: 100,
           origin: { y: 0.6 },
         });
-  
+
         return prevStep; // No avanzar más allá
       }
     });
@@ -260,7 +260,7 @@ export default function Home() {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [showFinalMessage]);
-  
+
   return (
     <div className={style.centeredGrid}>
       {loading.loading && (
@@ -345,10 +345,8 @@ export default function Home() {
                 muted
                 ref={cameraRef}
                 onPlay={() => {
-                  if (!cameraRef.current || !canvasRef.current || !model){
-                    console.log("🚫 Modelo o elementos DOM aún no listos");
+                  if (!cameraRef.current || !canvasRef.current || !model)
                     return;
-                  }
                   if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
                       cameraRef.current,
@@ -403,7 +401,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-            
+
             {/* 6) Y fuera de la cámara puedes dejar el ProgressTime */}
             <ProgressTime key={timeLeft} initialTime={timeLeft} />
           </div>
