@@ -345,8 +345,10 @@ export default function Home() {
                 muted
                 ref={cameraRef}
                 onPlay={() => {
-                  if (!cameraRef.current || !canvasRef.current || !model)
+                  if (!cameraRef.current || !canvasRef.current || !model){
+                    console.log("🚫 Modelo o elementos DOM aún no listos");
                     return;
+                  }
                   if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
                       cameraRef.current,
