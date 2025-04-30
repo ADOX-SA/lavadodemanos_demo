@@ -345,12 +345,12 @@ export default function Home() {
                 muted
                 ref={cameraRef}
                 onPlay={() => {
-                  if (!cameraRef.current || !canvasRef.current)
+                  if (!cameraRef.current || !canvasRef.current || !model)
                     return;
                   if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
                       cameraRef.current,
-                      model!,
+                      model,
                       canvasRef.current,
                       allowedTrust,
                       (pred) => setPredicciones(pred)
