@@ -345,7 +345,7 @@ export default function Home() {
                 muted
                 ref={cameraRef}
                 onPlay={() => {
-                  if (!cameraRef.current || !canvasRef.current || !model)
+                  if (!cameraRef.current || !canvasRef.current)
                     return;
                   if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
