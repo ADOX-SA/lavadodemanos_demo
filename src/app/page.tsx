@@ -350,7 +350,7 @@ export default function Home() {
                   if (stopDetectionRef.current) stopDetectionRef.current();
                     stopDetectionRef.current = detectVideo(
                       cameraRef.current,
-                      model,
+                      model!,
                       canvasRef.current,
                       allowedTrust,
                       (pred) => setPredicciones(pred)
