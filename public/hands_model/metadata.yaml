@@ -1,7 +1,7 @@
 description: Ultralytics last model trained on ./data.yaml
 author: Ultralytics
-date: '2025-01-08T13:06:02.711427'
-version: 8.3.58
+date: '2025-05-08T19:30:47.527519'
+version: 8.3.129
 license: AGPL-3.0 License (https://ultralytics.com/license)
 docs: https://docs.ultralytics.com
 stride: 32
@@ -11,14 +11,15 @@ imgsz:
 - 640
 - 640
 names:
-  0: Paso 1
-  1: Paso 2
-  2: Paso 3
-  3: Paso 4
-  4: Paso 5
-  5: Paso 6
-  6: Paso 7
+  0: paso1
+  1: paso2
+  2: paso3
+  3: paso4
+  4: paso5
+  5: paso6
 args:
   batch: 1
   half: false
   int8: false
+  nms: false
+channels: 3
