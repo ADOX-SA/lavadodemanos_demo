@@ -31,7 +31,7 @@ export const AiModelContextProvider = ({
 
   useEffect(() => {
     let isMounted = true;
-
+    
     const loadModel = async () => {
       try {
         // Intenta cargar el modelo desde IndexedDB
@@ -73,7 +73,7 @@ export const AiModelContextProvider = ({
         }
       }
     };
-
+    tf.setBackend("webgl"); 
     tf.ready().then(loadModel).catch((error) => {
       console.error("Error cargando el modelo:", error);
     });

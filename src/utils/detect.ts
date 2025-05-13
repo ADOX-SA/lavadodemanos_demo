@@ -83,12 +83,7 @@ export const detectAllClasses = async (
   const [modelWidth, modelHeight] = model.inputShape.slice(1, 3); // Obtener ancho y alto del modelo
 
   tf.engine().startScope(); // Iniciar scope de TensorFlow.js
-  const preprocessed = preprocess(source, modelWidth, modelHeight);
-  if (!preprocessed[0]) {
-    console.error("Error en la preprocesamiento de la fuente.");
-    return;
-  }
-  const [input, xRatio, yRatio] = preprocessed;
+  const [input] = preprocess(source, modelWidth, modelHeight); // Preprocesar imagen
 
   // Verificar si el tensor de entrada es nulo
   if (!input) {
@@ -96,25 +91,32 @@ export const detectAllClasses = async (
     return;
   }
 
-  const predictions = tf.tidy(() => {
-    const res = model.net.execute(input) as tf.Tensor<tf.Rank>;
-    const transRes = res.transpose([0, 2, 1]);
-    const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]);
-  
-    const scores = [];
-    for (let i = 0; i < numClass; i++) {
-      scores.push(
-        rawScores.slice([0, i], [-1, 1]).flatten().max().arraySync() as number
-      );
+  const res = model.net.execute(input) as tf.Tensor<tf.Rank>; // Ejecutar inferencia
+
+  const transRes = res.transpose([0, 2, 1]); // Transponer resultados
+  const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]); // Extraer scores
+  const rawScoresData = await rawScores.data(); // ⏱️ más rápido que .arraySync muchas veces
+
+const scores = [];
+for (let i = 0; i < numClass; i++) {
+  let max = -Infinity;
+  for (let j = 0; j < rawScores.shape[0]; j++) {
+    const index = j * numClass + i;
+    if (rawScoresData[index] > max) {
+      max = rawScoresData[index];
     }
-  
-    return scores
-      .map((score, i) => ({
-        clase: labels[i],
-        score: Math.ceil(score * 100),
-      }))
-      .filter((pred) => pred.score >= allowedTrust);
-  });
+  }
+  scores.push(max);
+}
+
+  // Filtrar predicciones con baja confianza (score < allowedTrust)
+  const predictions = scores
+    .map((score, i) => ({
+      clase: labels[i],
+      score: Math.ceil(score * 100),
+    }))
+    .filter((pred) => pred.score >= allowedTrust); // Solo considerar predicciones con score >= allowedTrust
+
   if (predictions.length > 0) {
     callback(predictions);
   } else {
@@ -123,7 +125,7 @@ export const detectAllClasses = async (
   }
 
   // Liberar tensores
-  tf.dispose([ input]);
+  tf.dispose([res, transRes, rawScores, input]);
   tf.engine().endScope(); // Finalizar scope de TensorFlow.js
 };
 
@@ -134,38 +136,47 @@ export const detectVideo = (
   allowedTrust: number,
   callback: (predicciones: { clase: string; score: number }[]) => void
 ) => {
-  let intervalId: number | null = null;
+  let intervalId: NodeJS.Timeout | null = null;
   let isProcessing = false;
   let isStopped = false; // Nueva bandera para controlar el estado
-  let lastDetection = 0;
-  const minDelay = 250;
-  
-  const detectLoop = async (timestamp: number) => {
-    if (isStopped) return;
-  
-    if (timestamp - lastDetection > minDelay) {
-      isProcessing = true;
-      try {
-        await detectAllClasses(vidSource, model, canvasRef, allowedTrust, callback);
-      } finally {
-        isProcessing = false;
-        lastDetection = timestamp;
+
+  const detectFrame = async () => {
+    if (isStopped || isProcessing) return; // Verificar si está detenido
+    isProcessing = true;
+
+    try {
+      // Verificar si el video sigue siendo válido
+      if (vidSource.videoWidth === 0 || vidSource.videoHeight === 0 || vidSource.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        console.log("Video no listo, omitiendo fotograma.");
+        return;
       }
+
+      await detectAllClasses(vidSource, model, canvasRef, allowedTrust, callback);
+    } catch (error) {
+      console.error("Error durante la detección:", error);
+    } finally {
+      isProcessing = false;
     }
+  };
   
-    requestAnimationFrame(detectLoop);
+  // Iniciar detección cada 100 ms
+  intervalId = setInterval(() => {
+    detectFrame();
+  }, 100);
+  // Iniciar detección inmediatamente
+  detectFrame();
+  
+
+  console.log("Detección iniciada.");
+
+  const stopDetection = () => {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+      isStopped = true; // Marcar como detenido
+      console.log("Detección detenida.");
+    }
   };
 
-// Iniciar loop cuando comience el video
-  vidSource.addEventListener("playing", () => {
-    isStopped = false;
-    requestAnimationFrame(detectLoop);
-  });
-
-  // Define stopDetection to stop the detection loop
-    const stopDetection = () => {
-      isStopped = true;
-    };
-  
-    return stopDetection;
+  return stopDetection;
 };
