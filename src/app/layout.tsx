@@ -34,7 +34,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} antialiased`}
       >
-        <AiModelContextProvider>{children}</AiModelContextProvider>
+        {/* <AiModelContextProvider> */}
+          {children}
+          {/* </AiModelContextProvider> */}
       </body>
     </html>
   );

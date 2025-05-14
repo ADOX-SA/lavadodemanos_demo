@@ -1,57 +1,72 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface UseCountdownProps {
-  duration: number;
+  duration: number; // en segundos
   onComplete?: () => void;
   onChange?: (timeLeft: number) => void;
 }
 
-const useCountdown = ({
-  duration,
-  onComplete,
-  onChange,
-}: UseCountdownProps) => {
-  const [countdownTimeLeft, setCountdownTimeLeft] = useState(0);
-  const [isCountdownActive, setIsCountdownActive] = useState(false);
+const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isActive, setIsActive] = useState(false);
 
-  // Maneja la cuenta atrás y dispara onComplete solo una vez al llegar a 0
-  useEffect(() => {
-    if (!isCountdownActive) return;
+  const startTimeRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
-    if (countdownTimeLeft === 0) {
+  const update = useCallback((now: number) => {
+    if (startTimeRef.current === null) return;
+
+    const elapsed = (now - startTimeRef.current) / 1000;
+    const remaining = Math.max(duration - elapsed, 0);
+    const rounded = Math.floor(remaining);
+
+    setTimeLeft((prev) => {
+      if (prev !== rounded) {
+        onChange?.(rounded);
+      }
+      return rounded;
+    });
+
+    if (remaining <= 0) {
+      setIsActive(false);
       onComplete?.();
-      setIsCountdownActive(false);
-      return;
+    } else {
+      rafIdRef.current = requestAnimationFrame(update);
     }
+  }, [duration, onChange, onComplete]);
 
-    const timerId = setInterval(() => {
-      setCountdownTimeLeft((t) => Math.max(0, t - 1));
-    }, 600); 
-
-    return () => clearInterval(timerId);
-  }, [isCountdownActive, countdownTimeLeft, onComplete]);
-
-  // Notifica cada cambio de tiempo
   useEffect(() => {
-    onChange?.(countdownTimeLeft);
-  }, [countdownTimeLeft, onChange]);
+    if (!isActive) return;
+
+    startTimeRef.current = performance.now();
+    setTimeLeft(duration);
+    rafIdRef.current = requestAnimationFrame(update);
+
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, [isActive, duration, update]);
 
   const startCountdown = useCallback(() => {
-    if (!isCountdownActive) {
-      setCountdownTimeLeft(duration);
-      setIsCountdownActive(true);
+    if (!isActive) {
+      setIsActive(true);
     }
-  }, [duration, isCountdownActive]);
+  }, [isActive]);
 
   const stopCountdown = useCallback(() => {
-    setIsCountdownActive(false);
-    setCountdownTimeLeft(0);
+    setIsActive(false);
+    setTimeLeft(0);
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
   }, []);
 
   return {
-    countdownTimeLeft,
-    isCountdownActive,
+    countdownTimeLeft: timeLeft,
+    isCountdownActive: isActive,
     startCountdown,
     stopCountdown,
   };
