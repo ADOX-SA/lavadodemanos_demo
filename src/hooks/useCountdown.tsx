@@ -39,8 +39,7 @@ const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => 
   useEffect(() => {
     if (!isActive) return;
 
-    startTimeRef.current = performance.now();
-    setTimeLeft(duration);
+    console.log("⏳ Countdown iniciado desde useEffect");
     rafIdRef.current = requestAnimationFrame(update);
 
     return () => {
@@ -48,15 +47,19 @@ const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => 
         cancelAnimationFrame(rafIdRef.current);
       }
     };
-  }, [isActive, duration, update]);
+  }, [isActive]);
 
   const startCountdown = useCallback(() => {
     if (!isActive) {
+      console.log("🟢 startCountdown llamado. Duración:", duration);
+      startTimeRef.current = performance.now();
+      setTimeLeft(duration);
       setIsActive(true);
     }
-  }, [isActive]);
+  }, [isActive, duration]);
 
   const stopCountdown = useCallback(() => {
+    console.log("🔴 stopCountdown llamado");
     setIsActive(false);
     setTimeLeft(0);
     if (rafIdRef.current !== null) {

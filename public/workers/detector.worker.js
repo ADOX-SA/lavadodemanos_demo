@@ -67,14 +67,12 @@ self.onmessage = async (e) => {
         }
         scores.push(max);
       }
-
       const predictions = scores
         .map((score, i) => ({
           clase: labels[i],
           score: Math.ceil(score * 100)
         }))
         .filter((pred) => pred.score >= allowedTrust);
-
       postMessage({
         type: "result",
         predictions
