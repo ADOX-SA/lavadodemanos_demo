@@ -4,10 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 interface UseCountdownProps {
   duration: number; // en segundos
   onComplete?: () => void;
-  onChange?: (timeLeft: number) => void;
 }
 
-const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => {
+const useCountdown = ({ duration, onComplete,  }: UseCountdownProps) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
 
@@ -21,12 +20,9 @@ const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => 
     const remaining = Math.max(duration - elapsed, 0);
     const rounded = Math.floor(remaining);
 
-    setTimeLeft((prev) => {
-      if (prev !== rounded) {
-        onChange?.(rounded);
-      }
-      return rounded;
-    });
+    if (rounded !== timeLeft) {
+      setTimeLeft(rounded);
+    }
 
     if (remaining <= 0) {
       setIsActive(false);
@@ -34,7 +30,7 @@ const useCountdown = ({ duration, onComplete, onChange }: UseCountdownProps) => 
     } else {
       rafIdRef.current = requestAnimationFrame(update);
     }
-  }, [duration, onChange, onComplete]);
+  }, [duration, onComplete]);
 
   useEffect(() => {
     if (!isActive) return;
