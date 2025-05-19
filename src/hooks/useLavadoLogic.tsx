@@ -16,8 +16,8 @@ export const useLavadoLogic = () => {
   const [initializing, setInitializing] = useState(false);
   const [consecutiveNoHandsFrames, setConsecutiveNoHandsFrames] = useState(0);
   const [showFinalMessage, setShowFinalMessage] = useState(false);
-
   const stopDetectionRef = useRef<() => void>(() => {});
+  
 
   const {
     startTimer,
@@ -46,6 +46,7 @@ export const useLavadoLogic = () => {
       resetTimer();
       pauseTimer();
     } else {
+      stopDetectionRef.current();
       setInitializing(false);
       resetTimer();
       pauseTimer();
@@ -74,6 +75,7 @@ export const useLavadoLogic = () => {
   });
 
   const resetProcess = () => {
+
     setCurrentStep(0);
     setCompletedSteps(new Array(labels.length).fill(false));
     resetTimer();
@@ -101,7 +103,7 @@ export const useLavadoLogic = () => {
         pauseTimer();
         return next;
       } else {
-        stopDetectionRef.current?.();
+        stopDetectionRef.current();
         setInitializing(false);
         resetTimer();
         pauseTimer();
