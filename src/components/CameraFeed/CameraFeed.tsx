@@ -26,11 +26,20 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   allowedTrust,
   stopDetectionRef
 }) => {
-  useEffect(() => {
   const video = cameraRef.current;
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
+  const startDetectInterval = () => setInterval(() => {
+    if (!ready || video?.readyState !== 4 || !ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    detect(imageData, allowedTrust);
+  }, 300);
+
+
+  useEffect(() => {
   if (!video || !ctx || !ready) return;
 
   const waitForVideo = () => {
@@ -41,23 +50,21 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    if (stopDetectionRef.current) stopDetectionRef.current();
-
-    const intervalId = setInterval(() => {
-      if (!ready || video.readyState !== 4) return;
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      detect(imageData, allowedTrust);
-    }, 300);
-
-    stopDetectionRef.current = () => clearInterval(intervalId);
   };
 
   waitForVideo();
 }, [ready]);
 
+
+useEffect(() => {
+  if (stopDetectionRef.current) stopDetectionRef.current();
+
+  if (!showFinalMessage){
+    const id = startDetectInterval();
+
+    stopDetectionRef.current = () => clearInterval(id);
+  }
+},[showFinalMessage, ready]);
 
   return (
     <div className={style.cameraContainer}>
