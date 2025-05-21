@@ -1,7 +1,7 @@
 description: Ultralytics last model trained on ./data.yaml
 author: Ultralytics
-date: '2025-05-08T19:30:47.527519'
-version: 8.3.129
+date: '2025-05-17T00:26:00.755788'
+version: 8.3.137
 license: AGPL-3.0 License (https://ultralytics.com/license)
 docs: https://docs.ultralytics.com
 stride: 32
