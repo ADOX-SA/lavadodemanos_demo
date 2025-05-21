@@ -31,8 +31,25 @@ export const AiModelContextProvider = ({
 
   useEffect(() => {
     let isMounted = true;
-    tf.ready().then(async () => {
+    
+    const loadModel = async () => {
       try {
+        // Intenta cargar el modelo desde IndexedDB
+        let yolov8 = await tf.loadGraphModel(`indexeddb://${modelName}`);
+        console.log("Modelo cargado desde IndexedDB");
+
+        const inputShape = yolov8.inputs?.[0]?.shape;
+        if (!inputShape) {
+          throw new Error("No se pudo obtener la forma del modelo.");
+        }
+
+        if (isMounted) {
+          setLoading({ loading: false, progress: 1 });
+          setModel({ net: yolov8, inputShape });
+        }
+      } catch (error) {
+        console.log("No se encontró el modelo en IndexedDB, cargando desde el servidor...");
+        // Si no está en IndexedDB, cárgalo desde el servidor
         const yolov8 = await tf.loadGraphModel(
           `${window.location.href}/${modelName}/model.json`,
           {
@@ -46,18 +63,19 @@ export const AiModelContextProvider = ({
           throw new Error("No se pudo obtener la forma del modelo.");
         }
 
-        const dummyInput = tf.ones(inputShape);
-        const warmupResults = yolov8.execute(dummyInput);
+        // Guarda el modelo en IndexedDB para futuras cargas
+        await yolov8.save(`indexeddb://${modelName}`);
+        console.log("Modelo guardado en IndexedDB");
 
         if (isMounted) {
           setLoading({ loading: false, progress: 1 });
           setModel({ net: yolov8, inputShape });
         }
-
-        tf.dispose([warmupResults, dummyInput]);
-      } catch (error) {
-        console.error("Error cargando el modelo:", error);
       }
+    };
+    tf.setBackend("webgl"); 
+    tf.ready().then(loadModel).catch((error) => {
+      console.error("Error cargando el modelo:", error);
     });
 
     return () => {
