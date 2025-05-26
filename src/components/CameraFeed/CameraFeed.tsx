@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef } from "react";
-import { BorderTimer } from "@/components/BorderTimer";
+// import { BorderTimer } from "@/components/BorderTimer";
 import EyeOffIcon from "@/components/IconEye/IconEye";
 import style from "./CameraFeed.module.css";
 interface CameraFeedProps {
@@ -93,7 +93,7 @@ useEffect(() => {
         }}
       />
 
-      <BorderTimer timeLeft={timeLeft} initialTime={8} />
+      {/* <BorderTimer timeLeft={timeLeft} initialTime={8} /> */}
 
       {countdownTimeLeft > 0 && (
         <div className={style.warningMessage}>

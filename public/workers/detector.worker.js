@@ -29,37 +29,48 @@ self.onmessage = async (e) => {
   }
 
   if (type === "detect" && model) {
-    tf.engine().startScope();
-
     try {
       const { imageData, allowedTrust } = data;
 
-      const img = tf.browser.fromPixels(imageData);
-      const [h, w] = img.shape.slice(0, 2);
-      const maxSize = Math.max(w, h);
+      // Usamos tidy para encapsular todos los tensores temporales
+      const { rawScoresTensor, rawScoresShape } = tf.tidy(() => {
+        const img = tf.browser.fromPixels(imageData);
+        const [h, w] = img.shape.slice(0, 2);
+        const maxSize = Math.max(w, h);
 
-      const imgPadded = img.pad([
-        [0, maxSize - h],
-        [0, maxSize - w],
-        [0, 0]
-      ]);
+        const imgPadded = img.pad([
+          [0, maxSize - h],
+          [0, maxSize - w],
+          [0, 0]
+        ]);
 
-      const input = tf.image
-        .resizeBilinear(imgPadded, inputShape.slice(1, 3))
-        .div(255.0)
-        .expandDims(0);
+        const input = tf.image
+          .resizeBilinear(imgPadded, inputShape.slice(1, 3))
+          .div(255.0)
+          .expandDims(0);
 
-      const res = model.execute(input);
-      const transRes = res.transpose([0, 2, 1]);
+        const res = model.execute(input);
+        const transRes = res.transpose([0, 2, 1]);
+        const numClass = labels.length;
+
+        const rawScores = transRes
+          .slice([0, 0, 4], [-1, -1, numClass])
+          .squeeze([0]);
+
+        return {
+          rawScoresTensor: rawScores,
+          rawScoresShape: rawScores.shape
+        };
+      });
+
+      // Sacamos los datos afuera del tidy para no perderlos
+      const rawScoresData = await rawScoresTensor.data();
       const numClass = labels.length;
-      const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]);
-
-      const rawScoresData = await rawScores.data();
 
       const scores = [];
       for (let i = 0; i < numClass; i++) {
         let max = -Infinity;
-        for (let j = 0; j < rawScores.shape[0]; j++) {
+        for (let j = 0; j < rawScoresShape[0]; j++) {
           const index = j * numClass + i;
           if (rawScoresData[index] > max) {
             max = rawScoresData[index];
@@ -67,25 +78,25 @@ self.onmessage = async (e) => {
         }
         scores.push(max);
       }
+
       const predictions = scores
         .map((score, i) => ({
           clase: labels[i],
           score: Math.ceil(score * 100)
         }))
         .filter((pred) => pred.score >= allowedTrust);
+
       postMessage({
         type: "result",
         predictions
       });
 
-      tf.dispose([res, transRes, rawScores, input, img, imgPadded]);
+      tf.dispose(rawScoresTensor); // descartamos manualmente lo que salió del tidy
     } catch (error) {
       postMessage({
         type: "error",
         message: error.message || "Error durante la inferencia"
       });
-    }
-
-    tf.engine().endScope();
+    }  
   }
 };

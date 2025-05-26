@@ -9,7 +9,7 @@ import labels from "../utils/labels.json";
 import LogoAdox from "../../public/LogoAdox/Logo";
 import TitleProject from "../../public/Titulo/Titulo";
 import EyeOffIcon from "@/components/IconEye/IconEye";
-import { BorderTimer } from "@/components/BorderTimer";
+// import { BorderTimer } from "@/components/BorderTimer";
 import useDetectorWorker from "@/hooks/useDetectorWorker";
 import { useLavadoLogic } from "@/hooks/useLavadoLogic";
 import { CameraFeed } from "@/components/CameraFeed";
@@ -128,7 +128,11 @@ export default function Home() {
   ).toFixed(1);
 
   return (
-    <div className={style.centeredGrid}>
+    <div className={style.centeredGrid}
+      onClick={() => {
+        console.log("click");
+      }}
+    >
       {!ready && <Loader text="Cargando modelo..." progress={(0).toFixed(2)} />}
 
       <div className={style.header}>
