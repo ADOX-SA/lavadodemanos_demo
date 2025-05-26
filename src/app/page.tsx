@@ -8,8 +8,6 @@ import ProgressTime from "@/components/TimeProgress/TimeProgress";
 import labels from "../utils/labels.json";
 import LogoAdox from "../../public/LogoAdox/Logo";
 import TitleProject from "../../public/Titulo/Titulo";
-import EyeOffIcon from "@/components/IconEye/IconEye";
-import { BorderTimer } from "@/components/BorderTimer";
 import useDetectorWorker from "@/hooks/useDetectorWorker";
 import { useLavadoLogic } from "@/hooks/useLavadoLogic";
 import { CameraFeed } from "@/components/CameraFeed";
@@ -20,7 +18,6 @@ export default function Home() {
   const webcam = new Webcam();
   const cameraRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [streaming, setStreaming] = useState<"camera" | null>(null);
 
   const {
     currentStep,
@@ -107,7 +104,6 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     webcam.open(cameraRef.current!);
-    setStreaming("camera");
 
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Enter") {

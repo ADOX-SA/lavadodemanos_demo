@@ -1,6 +1,6 @@
 // Nuevo archivo: hooks/useLavadoLogic.tsx
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import labels from "../utils/labels.json";
 import { soundSuccess } from "@/utils/func.utils";
 import useCountdown from "@/hooks/useCountdown";

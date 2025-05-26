@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { BorderTimer } from "@/components/BorderTimer";
 import EyeOffIcon from "@/components/IconEye/IconEye";
 import style from "./CameraFeed.module.css";

@@ -8,8 +8,8 @@ stride: 32
 task: detect
 batch: 1
 imgsz:
-- 640
-- 640
+- 256
+- 256
 names:
   0: paso1
   1: paso2

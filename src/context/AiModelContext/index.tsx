@@ -35,7 +35,7 @@ export const AiModelContextProvider = ({
     const loadModel = async () => {
       try {
         // Intenta cargar el modelo desde IndexedDB
-        let yolov8 = await tf.loadGraphModel(`indexeddb://${modelName}`);
+        const yolov8 = await tf.loadGraphModel(`indexeddb://${modelName}`);
         console.log("Modelo cargado desde IndexedDB");
 
         const inputShape = yolov8.inputs?.[0]?.shape;
@@ -48,6 +48,7 @@ export const AiModelContextProvider = ({
           setModel({ net: yolov8, inputShape });
         }
       } catch (error) {
+        console.error("Error al cargar el modelo desde IndexedDB:", error);
         console.log("No se encontró el modelo en IndexedDB, cargando desde el servidor...");
         // Si no está en IndexedDB, cárgalo desde el servidor
         const yolov8 = await tf.loadGraphModel(
