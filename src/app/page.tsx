@@ -17,7 +17,6 @@ export default function Home() {
   const [modelUrl, setModelUrl] = useState<string | undefined>();
   const webcam = new Webcam();
   const cameraRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const {
     currentStep,
@@ -185,7 +184,6 @@ export default function Home() {
               countdownTimeLeft={countdownTimeLeft}
               showFinalMessage={showFinalMessage}
               cameraRef={cameraRef}
-              canvasRef={canvasRef}
               detect={detect}
               allowedTrust={allowedTrust}
               stopDetectionRef={stopDetectionRef}

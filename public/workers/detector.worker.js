@@ -29,11 +29,14 @@ self.onmessage = async (e) => {
   }
 
   if (type === "detect" && model) {
+    console.log('detecting');
     tf.engine().startScope();
 
     try {
       const { imageData, allowedTrust } = data;
-
+      if (!imageData || !imageData.data) {
+        throw new Error("Datos de imagen no válidos");
+      }
       const img = tf.browser.fromPixels(imageData);
       const [h, w] = img.shape.slice(0, 2);
       const maxSize = Math.max(w, h);
@@ -43,7 +46,6 @@ self.onmessage = async (e) => {
         [0, maxSize - w],
         [0, 0]
       ]);
-
       const input = tf.image
         .resizeBilinear(imgPadded, inputShape.slice(1, 3))
         .div(255.0)
@@ -55,7 +57,6 @@ self.onmessage = async (e) => {
       const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]);
 
       const rawScoresData = await rawScores.data();
-
       const scores = [];
       for (let i = 0; i < numClass; i++) {
         let max = -Infinity;
@@ -65,6 +66,7 @@ self.onmessage = async (e) => {
             max = rawScoresData[index];
           }
         }
+        console.log(`Clase ${labels[i]}: ${max}`);
         scores.push(max);
       }
       const predictions = scores
@@ -73,6 +75,7 @@ self.onmessage = async (e) => {
           score: Math.ceil(score * 100)
         }))
         .filter((pred) => pred.score >= allowedTrust);
+      console.log("Predicciones:", predictions);
       postMessage({
         type: "result",
         predictions
