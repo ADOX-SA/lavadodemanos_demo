@@ -26,11 +26,11 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   allowedTrust,
   stopDetectionRef
 }) => {
-  const video = cameraRef.current;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
 
-  const startDetectInterval = () => setInterval(() => {
+  const startDetectInterval = (video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D
+) => setInterval(() => {
     if (!ready || video?.readyState !== 4 || !ctx) return;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -40,7 +40,10 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
 
 
   useEffect(() => {
-  if (!video || !ctx || !ready) return;
+    
+  const video = cameraRef.current;
+  const canvas = canvasRef.current;
+  if (!video || !canvas || !ready) return;
 
   const waitForVideo = () => {
     if (video.videoWidth === 0 || video.videoHeight === 0) {
@@ -58,9 +61,14 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
 
 useEffect(() => {
   if (stopDetectionRef.current) stopDetectionRef.current();
+    const video = cameraRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || !ready) return;
+    const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
   if (!showFinalMessage){
-    const id = startDetectInterval();
+    const id = startDetectInterval(video, canvas, ctx);
 
     stopDetectionRef.current = () => clearInterval(id);
   }
