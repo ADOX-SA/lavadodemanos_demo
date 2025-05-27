@@ -42,7 +42,7 @@ export default function Home() {
   } = useLavadoLogic();
 
   const { ready, detect, predictions } = useDetectorWorker(labels, modelUrl);
-  const allowedTrust = 40;
+  const allowedTrust = 80;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -55,10 +55,14 @@ export default function Home() {
       setConsecutiveNoHandsFrames(0);
 
       const boosted = predictions.map(p => {
-        if (p.clase === labels[currentStep]) {
-          return { ...p, score: Math.min(p.score + 30, 100) };
-        } else {
-          return { ...p, score: Math.max(p.score - 70, 0) };
+        // if (p.clase === labels[currentStep]) {
+        //   return { ...p, score: Math.min(p.score + 30, 100) };
+        // } else {
+        //   return { ...p, score: Math.max(p.score - 70, 0) };
+        // }
+        return {
+          ...p,
+          score: p.score
         }
       });
 
