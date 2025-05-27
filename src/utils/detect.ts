@@ -95,13 +95,19 @@ export const detectAllClasses = async (
 
   const transRes = res.transpose([0, 2, 1]); // Transponer resultados
   const rawScores = transRes.slice([0, 0, 4], [-1, -1, numClass]).squeeze([0]); // Extraer scores
+  const rawScoresData = await rawScores.data(); // ⏱️ más rápido que .arraySync muchas veces
 
-  const scores = [] as number[];
-  for (let i = 0; i < numClass; i++) {
-    scores.push(
-      rawScores.slice([0, i], [-1, 1]).flatten().max().arraySync() as number
-    );
+const scores = [];
+for (let i = 0; i < numClass; i++) {
+  let max = -Infinity;
+  for (let j = 0; j < rawScores.shape[0]; j++) {
+    const index = j * numClass + i;
+    if (rawScoresData[index] > max) {
+      max = rawScoresData[index];
+    }
   }
+  scores.push(max);
+}
 
   // Filtrar predicciones con baja confianza (score < allowedTrust)
   const predictions = scores
@@ -130,7 +136,7 @@ export const detectVideo = (
   allowedTrust: number,
   callback: (predicciones: { clase: string; score: number }[]) => void
 ) => {
-  let intervalId: number | null = null;
+  let intervalId: NodeJS.Timeout | null = null;
   let isProcessing = false;
   let isStopped = false; // Nueva bandera para controlar el estado
 
@@ -152,8 +158,15 @@ export const detectVideo = (
       isProcessing = false;
     }
   };
+  
+  // Iniciar detección cada 100 ms
+  intervalId = setInterval(() => {
+    detectFrame();
+  }, 100);
+  // Iniciar detección inmediatamente
+  detectFrame();
+  
 
-  intervalId = window.setInterval(detectFrame, 1000);
   console.log("Detección iniciada.");
 
   const stopDetection = () => {

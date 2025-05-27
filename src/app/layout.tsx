@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
-import { AiModelContextProvider } from "@/context/AiModelContext";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -34,7 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} antialiased`}
       >
-        <AiModelContextProvider>{children}</AiModelContextProvider>
+        {children}
       </body>
     </html>
   );

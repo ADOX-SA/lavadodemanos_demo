@@ -1,0 +1,199 @@
+.centeredGrid {
+  display: grid;
+  /* place-items: center; */
+  padding: 8px 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 4px;
+}
+
+.header img {
+  width: 100px;
+  height: auto;
+}
+
+.steps {
+  place-items: center;
+}
+
+.steps p{
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 300;
+  font-size: 32px;
+  line-height: 32px;
+  color: #000000;
+  padding: 24px 0px 12px 0px;
+}
+
+.steps div{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+
+
+
+
+
+
+/* Cambiar esto */
+
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 10px;
+  position: relative;
+}
+
+.container > * {
+  margin: 3px 0;
+}
+
+.column{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  /* padding: 0px 32px 0px 32px; */
+  margin: 16px 0 18px;
+  gap: 80px;
+}
+
+.content1 {
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.averages {
+  font-weight: 300;
+  font-family: 'Roboto';
+  text-align: center;
+  color: rgb(0, 0, 0);
+  padding: 20px;
+  width: 480px;
+  height: 600px;
+}
+
+.averages h3 {
+  font-family: 'Roboto';
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 300;
+}
+
+.progressItem {
+  font-size: 1em;
+  margin: 32px 0;
+}
+
+.progressBar {
+  width: 100%;
+  height: 10px;
+  background: #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #AA4CF2;
+  transition: width 0.5s ease-in-out;
+}
+
+.divider{
+  width: 100%;
+  border: 0.1px solid #9b9b9b;
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.contentText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.text{
+  font-family: 'Roboto';
+  font-style: normal;
+  font-size: 24px;
+  font-weight: 300;
+  color: #000000;
+  margin: 16px 0px 0px;
+}
+
+.cameraContainer {
+  position: relative;      /* clave para que los hijos absolutos se ubiquen aquí */
+  width: 100%;
+  height: 600px;
+  overflow: hidden;
+  background-image: url('/Camera/Camera.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+@media (min-width: 1024px) {
+  .cameraContainer {
+    width: 480px;      /* fija 640px solo en pantallas muy anchas */
+    /* height automática por aspect-ratio */
+  }
+}
+
+@media (max-width: 1440px) {
+  .cameraContainer {
+    width: 480px;      /* fija 640px solo en pantallas muy anchas */
+    /* height automática por aspect-ratio */
+  }
+}
+
+/* Tanto warningMessage como finalMessage pueden compartir base */
+.warningMessage,
+.finalMessage {
+  position: absolute;      /* ya no necesitas posicionarlos respecto al viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  background-color: rgb(0, 0, 0);
+  color: #fff;
+  z-index: 10;
+  padding: 20px;
+}
+
+.warningMessage {
+  background-color: rgba(0, 0, 0, 0.349);
+}
+
+/* Si querés tamaños de fuente distintos… */
+.warningMessage h3,
+.finalMessage h3 {
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.warningMessage p,
+.finalMessage p {
+  font-size: 22px;
+  margin-top: 10px;
+}
