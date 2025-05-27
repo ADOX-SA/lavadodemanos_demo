@@ -49,7 +49,6 @@ export default function Home() {
       setModelUrl(`${window.location.origin}/${modelName}/model.json`);
     }
   }, [modelName]);
- console.log('rerender')
    useEffect(() => {
     if (predictions.length > 0) {
       if (currentStep < labels.length - 1) stopCountdown();

@@ -25,25 +25,46 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   stopDetectionRef
 }) => {
 
-  const startDetectInterval = (video: HTMLVideoElement,
-  ctx: CanvasRenderingContext2D
-) => setInterval(() => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const startDetectInterval = (video: HTMLVideoElement, ctx: CanvasRenderingContext2D) =>
+  setInterval(() => {
     if (!ready || video?.readyState !== 4 || !ctx) return;
+    
+    // Dibuja el frame actual del video en el canvas
+    ctx.save();
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.log(ctx.canvas.width, ctx.canvas.height);
+    // Rota el canvas 180 grados alrededor del centro
+    ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
+    ctx.rotate(Math.PI);
+    ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2);
 
-    const imageData = ctx.getImageData(0, 0, 150, 300);
+    // Dibuja el frame rotado
+    ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    console.log(video.width, video.height, 'videowidth, video.height');
+    console.log(video.videoWidth, video.videoHeight, 'video.videoWidth, video.videoHeight');
+    console.log(ctx.canvas.width, ctx.canvas.height, 'ctx.canvas.width, ctx.canvas.height');
+
+    // Restaura el contexto
+    ctx.restore();
+
+    // Extrae la imagen del canvas
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     detect(imageData, allowedTrust);
   }, 300);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
 
 
 useEffect(() => {
   if (stopDetectionRef.current) stopDetectionRef.current();
+  // 480*600
     const video = cameraRef.current;
     const canvas = canvasRef.current;
+    canvas?.setAttribute("width","160");
+    canvas?.setAttribute("height", "120");
     if (!video || !canvas || !ready) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d")
       if (!ctx) return;
 
   if (!showFinalMessage){
@@ -69,18 +90,19 @@ useEffect(() => {
 
       <canvas
         ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          zIndex: 2,
-        }}
+        // NOTE: AGREGAR ESTO PARA QUE EL CANVAS SE MUESTRE Y PODAMOS VERLO COMO LE LLEGA AL MODELO
+        // style={{
+        //   position: "absolute",
+        //   top: 0,
+        //   right: 0,
+        //   width: 240,
+        //   height: 320,
+        //   pointerEvents: "none",
+        //   zIndex: 2,
+        // }}
       />
 
-      <BorderTimer timeLeft={timeLeft} initialTime={8} />
+      <BorderTimer timeLeft={timeLeft } initialTime={5} />
 
       {countdownTimeLeft > 0 && (
         <div className={style.warningMessage}>

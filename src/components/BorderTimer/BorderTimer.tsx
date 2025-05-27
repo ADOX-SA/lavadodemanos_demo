@@ -8,8 +8,10 @@ interface BorderTimerProps {
 }
 
 const BorderTimer: React.FC<BorderTimerProps> = ({ timeLeft, initialTime }) => {
+  const adjustedInitialTime = initialTime -1
+  const adjustedTimeLeft = timeLeft - 1;
   const progress =
-    Math.max(0, Math.min(1, (initialTime - timeLeft) / initialTime)) * 100;
+    Math.max(0, Math.min(1, (adjustedInitialTime - adjustedTimeLeft) / adjustedInitialTime)) * 100;
 
   return (
     <div className={styles.borderWrapper}>
@@ -20,19 +22,19 @@ const BorderTimer: React.FC<BorderTimerProps> = ({ timeLeft, initialTime }) => {
       <span
         className={styles.borderRight}
         style={{
-          height: `${Math.max(0, progress - 25) * 4}%`,
+          height: `${Math.min(Math.max(0, progress - 25), 25) * 4}%`,
         }}
       />
       <span
         className={styles.borderBottom}
         style={{
-          width: `${Math.max(0, progress - 50) * 4}%`,
+          width: `${Math.min(Math.max(0, progress - 50), 25) * 4}%`,
         }}
       />
       <span
         className={styles.borderLeft}
         style={{
-          height: `${Math.max(0, progress - 75) * 4}%`,
+          height: `${Math.min(Math.max(0, progress - 75), 25) * 4}%`,
         }}
       />
     </div>
