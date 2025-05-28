@@ -11,6 +11,7 @@ import TitleProject from "../../public/Titulo/Titulo";
 import useDetectorWorker from "@/hooks/useDetectorWorker";
 import { useLavadoLogic } from "@/hooks/useLavadoLogic";
 import { CameraFeed } from "@/components/CameraFeed";
+import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
 
 export default function Home() {
   const modelName = "hands_model";
@@ -173,10 +174,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <video key={currentStep} width="480" height="600" autoPlay muted loop>
-                  <source src={`/Pasos/Paso${currentStep + 1}.mp4`} type="video/mp4" />
-                  Tu navegador no soporta el elemento de video.
-                </video>
+                <VideoPlayer step={currentStep + 1} preloadNext={currentStep + 2} />
               )}
             </div>
           </div>
@@ -190,9 +188,8 @@ export default function Home() {
               detect={detect}
               allowedTrust={allowedTrust}
               stopDetectionRef={stopDetectionRef}
-
           />
-
+          
           <ProgressTime key={timeLeft} initialTime={timeLeft} />
         </div>
       </div>
