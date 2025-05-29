@@ -1,10 +1,15 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import labels from "../../utils/labels.json"; 
-import styles from "./spinner.module.css"; 
+import labels from "../../utils/labels.json";
+import styles from "./spinner.module.css";
+
+interface VideoCacheEntry {
+  status: "loading" | "loaded" | "error";
+  videoEl: HTMLVideoElement;
+}
 
 interface VideoPlayerProps {
-  step: number;           // paso activo (1-based)
+  step: number;
   width?: number;
   height?: number;
 }
@@ -15,75 +20,120 @@ export default function VideoPlayer({
   height = 600,
 }: VideoPlayerProps) {
   const basePath = "/Pasos/Paso";
-  const count = labels.length; // Total de pasos (videos)
-
+  const videoSrcs = labels.map((_, i) => `${basePath}${i + 1}.mp4`);
+  const videoCache = useRef<Map<string, VideoCacheEntry>>(new Map());
   const [loading, setLoading] = useState(true);
-  const videosRef = useRef<HTMLVideoElement[]>([]);
-  const visibleVideoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const currentVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Precargar videos sólo 1 vez
-  useEffect(() => {
-    // Limpio videos anteriores (por si acaso)
-    videosRef.current.forEach((video) => {
-      video.pause();
-      video.src = "";
-    });
-    videosRef.current = [];
+  // Precarga videos usando la caché del navegador
+  const preloadVideos = async () => {
+    const cachePromises = videoSrcs.map(async (src) => {
+      if (videoCache.current.has(src)) return;
 
-    setLoading(true);
-    let loadedCount = 0;
-
-    const onVideoLoaded = () => {
-      loadedCount++;
-      if (loadedCount === count) {
-        setLoading(false);
+      try {
+        const cache = await caches.open("videos-cache");
+        const cachedResponse = await cache.match(src);
+        
+        if (cachedResponse) {
+          const blob = await cachedResponse.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          createVideoElement(src, blobUrl);
+        } else {
+          const response = await fetch(src);
+          const responseClone = response.clone();
+          cache.put(src, responseClone);
+          createVideoElement(src, src);
+        }
+      } catch (error) {
+        console.error("Error caching video:", error);
+        createVideoElement(src, src);
       }
-    };
+    });
 
-    for (let i = 0; i < count; i++) {
-      const video = document.createElement("video");
-      video.src = `${basePath}${i + 1}.mp4`;
-      video.preload = "auto";
-      video.muted = true;
-      video.load();
-      video.addEventListener("loadeddata", onVideoLoaded);
-      videosRef.current.push(video);
-    }
+    await Promise.all(cachePromises);
+  };
 
+  const createVideoElement = (src: string, url: string) => {
+    const video = document.createElement("video");
+    video.src = url;
+    video.preload = "auto";
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.autoplay = false; // Cambiado a false
+    video.width = width;
+    video.height = height;
+
+    video.addEventListener("canplaythrough", () => {
+      const entry = videoCache.current.get(src);
+      if (entry) entry.status = "loaded";
+      checkAllLoaded();
+    });
+
+    video.addEventListener("error", () => {
+      const entry = videoCache.current.get(src);
+      if (entry) entry.status = "error";
+      checkAllLoaded();
+    });
+
+    videoCache.current.set(src, {
+      status: "loading",
+      videoEl: video,
+    });
+
+    video.load();
+  };
+
+  const checkAllLoaded = () => {
+    const allLoaded = [...videoCache.current.values()].every(
+      (entry) => entry.status === "loaded"
+    );
+    setLoading(!allLoaded);
+  };
+
+  useEffect(() => {
+    preloadVideos();
+    
     return () => {
-      videosRef.current.forEach((video) =>
-        video.removeEventListener("loadeddata", onVideoLoaded)
-      );
-      videosRef.current = [];
+      videoCache.current.forEach((entry) => {
+        if (entry.videoEl.src.startsWith("blob:")) {
+          URL.revokeObjectURL(entry.videoEl.src);
+        }
+      });
     };
-  }, []);  // SOLO una vez al montar
+  }, []);
 
+  // Efecto para manejar la reproducción cuando cambia el paso
   useEffect(() => {
     if (loading) return;
+    
+    const src = videoSrcs[step - 1];
+    const entry = videoCache.current.get(src);
+    
+    if (!entry || entry.status !== "loaded") return;
 
-    const visibleVideo = visibleVideoRef.current;
-    if (!visibleVideo) return;
-
-    visibleVideo.src = `${basePath}${step}.mp4`;
-    visibleVideo.load();
-    visibleVideo.play().catch(() => {
-    });
+    const video = entry.videoEl;
+    
+    // Solo cambiar si es un video nuevo
+    if (currentVideoRef.current !== video) {
+      if (containerRef.current) {
+        // Limpiar contenedor antes de agregar nuevo video
+        containerRef.current.innerHTML = '';
+        containerRef.current.appendChild(video);
+        currentVideoRef.current = video;
+      }
+    }
+    
+    // Forzar reproducción
+    video.play().catch(e => console.error("Error al reproducir:", e));
+    
   }, [step, loading]);
 
   return (
     <div>
       {loading && <div className={styles.spinner}></div>}
-
-      <video
-        ref={visibleVideoRef}
-        width={width}
-        height={height}
-        autoPlay
-        muted
-        loop
-        playsInline
-        style={{ display: loading ? "none" : "block" }}
-      />
+      <div ref={containerRef} />
     </div>
   );
 }
