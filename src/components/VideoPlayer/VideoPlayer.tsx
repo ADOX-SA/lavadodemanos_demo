@@ -1,86 +1,89 @@
 "use client";
-import { useRef, useEffect, useState } from "react";
-import styles from "./spinner.module.css"; // si usás un spinner visual
+import React, { useEffect, useRef, useState } from "react";
+import labels from "../../utils/labels.json"; 
+import styles from "./spinner.module.css"; 
 
 interface VideoPlayerProps {
-  step: number;
+  step: number;           // paso activo (1-based)
   width?: number;
   height?: number;
-  preloadNext?: number; // paso siguiente para precargar
 }
 
 export default function VideoPlayer({
   step,
   width = 480,
   height = 600,
-  preloadNext,
 }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const basePath = "/Pasos/Paso";
+  const count = labels.length; // Total de pasos (videos)
+
   const [loading, setLoading] = useState(true);
+  const videosRef = useRef<HTMLVideoElement[]>([]);
+  const visibleVideoRef = useRef<HTMLVideoElement>(null);
 
+  // Precargar videos sólo 1 vez
   useEffect(() => {
-  const videoEl = videoRef.current;
-  if (!videoEl) return;
+    // Limpio videos anteriores (por si acaso)
+    videosRef.current.forEach((video) => {
+      video.pause();
+      video.src = "";
+    });
+    videosRef.current = [];
 
-  const handleLoadedData = () => {
-    console.log("✅ Video listo");
-    setLoading(false);
-  };
-
-  const handleLoadStart = () => {
-    console.log("🔄 Iniciando carga del video");
     setLoading(true);
-  };
+    let loadedCount = 0;
 
-  videoEl.addEventListener("loadeddata", handleLoadedData);
-  videoEl.addEventListener("loadstart", handleLoadStart);
+    const onVideoLoaded = () => {
+      loadedCount++;
+      if (loadedCount === count) {
+        setLoading(false);
+      }
+    };
 
-  // Si el video ya está cargado antes de que se monten los eventos
-  if (videoEl.readyState >= 2) {
-    console.log("⚠️ Video ya estaba cargado");
-    setLoading(false);
-  }
-
-  return () => {
-    videoEl.removeEventListener("loadeddata", handleLoadedData);
-    videoEl.removeEventListener("loadstart", handleLoadStart);
-  };
-}, [step]);
-
-
-  useEffect(() => {
-    console.log(`Precargando video del paso ${preloadNext}`);
-    if (preloadNext === undefined) return;
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "video";
-    link.href = `/Pasos/Paso${preloadNext}.mp4`;
-    document.head.appendChild(link);
+    for (let i = 0; i < count; i++) {
+      const video = document.createElement("video");
+      video.src = `${basePath}${i + 1}.mp4`;
+      video.preload = "auto";
+      video.muted = true;
+      video.load();
+      video.addEventListener("loadeddata", onVideoLoaded);
+      videosRef.current.push(video);
+    }
 
     return () => {
-      document.head.removeChild(link);
+      videosRef.current.forEach((video) =>
+        video.removeEventListener("loadeddata", onVideoLoaded)
+      );
+      videosRef.current = [];
     };
-  }, [preloadNext]);
+  }, []);  // SOLO una vez al montar
+
+  useEffect(() => {
+    if (loading) return;
+
+    const visibleVideo = visibleVideoRef.current;
+    if (!visibleVideo) return;
+
+    visibleVideo.src = `${basePath}${step}.mp4`;
+    visibleVideo.load();
+    visibleVideo.play().catch(() => {
+    });
+  }, [step, loading]);
 
   return (
     <div>
       {loading && <div className={styles.spinner}></div>}
 
       <video
-        ref={videoRef}
-        key={step}
+        ref={visibleVideoRef}
         width={width}
         height={height}
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
         style={{ display: loading ? "none" : "block" }}
-      >
-        <source src={`/Pasos/Paso${step}.mp4`} type="video/mp4" />
-        Tu navegador no soporta el elemento de video.
-      </video>
+      />
     </div>
   );
 }

@@ -174,7 +174,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <VideoPlayer step={currentStep + 1} preloadNext={currentStep + 2} />
+                <VideoPlayer step={currentStep + 1} />
               )}
             </div>
           </div>
