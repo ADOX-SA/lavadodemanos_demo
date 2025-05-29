@@ -1,0 +1,27 @@
+/* Contenedor del spinner con fondo transparente */
+.spinner {
+  position: relative;
+  width: 480px;
+  height: 600px;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* El círculo giratorio */
+.spinner::after {
+  content: "";
+  width: 100px;
+  height: 100px;
+  border: 8px solid #AA4CF2;
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
