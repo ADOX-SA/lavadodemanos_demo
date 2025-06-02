@@ -18,6 +18,7 @@ export default function Home() {
   const [modelUrl, setModelUrl] = useState<string | undefined>();
   const webcam = new Webcam();
   const cameraRef = useRef<HTMLVideoElement>(null);
+  const [videoProgress, setVideoProgress] = useState(0);
 
   const {
     currentStep,
@@ -128,8 +129,8 @@ export default function Home() {
 
   return (
     <div className={style.centeredGrid}>
-      {!ready && <Loader text="Cargando modelo..." progress={(0).toFixed(2)} />}
-
+      {!ready && (<Loader text="Cargando modelo y videos..." progress={videoProgress.toFixed(2) + (0).toFixed(2)} />)}
+      
       <div className={style.header}>
         <TitleProject />
         <LogoAdox />
@@ -174,7 +175,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <VideoPlayer step={currentStep + 1} />
+                <VideoPlayer step={currentStep + 1} onProgress={setVideoProgress} />
               )}
             </div>
           </div>
