@@ -27,32 +27,39 @@ export default function VideoPlayer({
   const currentVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Precarga videos usando la caché del navegador
-  const preloadVideos = async () => {
-    const cachePromises = videoSrcs.map(async (src) => {
-      if (videoCache.current.has(src)) return;
+const preloadVideos = async () => {
+  const cache = await caches.open("videos-cache");
 
-      try {
-        const cache = await caches.open("videos-cache");
-        const cachedResponse = await cache.match(src);
-        
-        if (cachedResponse) {
-          const blob = await cachedResponse.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          createVideoElement(src, blobUrl);
-        } else {
-          const response = await fetch(src);
-          const responseClone = response.clone();
-          cache.put(src, responseClone);
-          createVideoElement(src, src);
-        }
-      } catch (error) {
-        console.error("Error caching video:", error);
-        createVideoElement(src, src);
+  const cachePromises = videoSrcs.map(async (src) => {
+    // Si ya lo tienes en cache local (videoCache), no repitas
+    if (videoCache.current.has(src)) return;
+
+    try {
+      let cachedResponse = await cache.match(src);
+
+      // Si no está en cache, lo descargamos y lo guardamos
+      if (!cachedResponse) {
+        const response = await fetch(src);
+        const responseClone = response.clone();
+        await cache.put(src, responseClone);
+        cachedResponse = response;
       }
-    });
 
-    await Promise.all(cachePromises);
-  };
+      // En este punto, sí o sí tenemos cachedResponse
+      const blob = await cachedResponse.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      createVideoElement(src, blobUrl); // crea <video> y lo guarda en el mapa
+
+    } catch (error) {
+      console.error("Error caching or loading video:", error);
+      createVideoElement(src, src); // fallback: lo carga directamente
+    }
+  });
+
+  await Promise.all(cachePromises);
+};
+
 
   const createVideoElement = (src: string, url: string) => {
     const video = document.createElement("video");
