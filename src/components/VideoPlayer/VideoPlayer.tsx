@@ -12,12 +12,14 @@ interface VideoPlayerProps {
   step: number;
   width?: number;
   height?: number;
+  onProgress?: (percent: number) => void;
 }
 
 export default function VideoPlayer({
   step,
   width = 480,
   height = 600,
+  onProgress
 }: VideoPlayerProps) {
   const basePath = "/Pasos/Paso";
   const videoSrcs = labels.map((_, i) => `${basePath}${i + 1}.mp4`);
@@ -25,28 +27,38 @@ export default function VideoPlayer({
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [ , setCachedCount] = useState(0);
+  const totalVideos = videoSrcs.length;
 
   // Precarga videos usando la caché del navegador
 const preloadVideos = async () => {
   const cache = await caches.open("videos-cache");
 
-  // 1️⃣ PRIMERA FASE: guardar en caché solo si NO está ya guardado
+  // 1️⃣ PRIMERA FASE: guardar en caché solo si NO está ya guardado y marcar progreso
   await Promise.all(
-    videoSrcs.map(async (src) => {
-      const alreadyInCache = await cache.match(src);
-      if (!alreadyInCache) {
-        try {
-          const response = await fetch(src);
-          await cache.put(src, response.clone());
-          console.log(`✅ Guardado en caché: ${src}`);
-        } catch (error) {
-          console.error(`❌ Error guardando ${src}:`, error);
-        }
-      } else {
-        console.log(`ℹ️ Ya estaba en caché: ${src}`);
+  videoSrcs.map(async (src) => {
+    const alreadyInCache = await cache.match(src);
+    if (!alreadyInCache) {
+      try {
+        const response = await fetch(src);
+        await cache.put(src, response.clone());
+        console.log(`✅ Guardado en caché: ${src}`);
+      } catch (error) {
+        console.error(`❌ Error guardando ${src}:`, error);
       }
-    })
-  );
+    } else {
+      console.log(`ℹ️ Ya estaba en caché: ${src}`);
+    }
+
+    // Aumentar el contador y emitir el progreso
+    setCachedCount((prev) => {
+      const next = prev + 1;
+      const percent = (next / totalVideos) * 100;
+      onProgress?.(percent);
+      return next;
+    });
+  })
+);
 
   // 2️⃣ SEGUNDA FASE: leer desde la caché y crear los elementos de video
   await Promise.all(
