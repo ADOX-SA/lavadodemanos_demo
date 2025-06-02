@@ -30,35 +30,44 @@ export default function VideoPlayer({
 const preloadVideos = async () => {
   const cache = await caches.open("videos-cache");
 
-  const cachePromises = videoSrcs.map(async (src) => {
-    // Si ya lo tienes en cache local (videoCache), no repitas
-    if (videoCache.current.has(src)) return;
-
-    try {
-      let cachedResponse = await cache.match(src);
-
-      // Si no está en cache, lo descargamos y lo guardamos
-      if (!cachedResponse) {
-        const response = await fetch(src);
-        const responseClone = response.clone();
-        await cache.put(src, responseClone);
-        cachedResponse = response;
+  // 1️⃣ PRIMERA FASE: guardar en caché solo si NO está ya guardado
+  await Promise.all(
+    videoSrcs.map(async (src) => {
+      const alreadyInCache = await cache.match(src);
+      if (!alreadyInCache) {
+        try {
+          const response = await fetch(src);
+          await cache.put(src, response.clone());
+          console.log(`✅ Guardado en caché: ${src}`);
+        } catch (error) {
+          console.error(`❌ Error guardando ${src}:`, error);
+        }
+      } else {
+        console.log(`ℹ️ Ya estaba en caché: ${src}`);
       }
+    })
+  );
 
-      // En este punto, sí o sí tenemos cachedResponse
-      const blob = await cachedResponse.blob();
-      const blobUrl = URL.createObjectURL(blob);
+  // 2️⃣ SEGUNDA FASE: leer desde la caché y crear los elementos de video
+  await Promise.all(
+    videoSrcs.map(async (src) => {
+      if (videoCache.current.has(src)) return;
 
-      createVideoElement(src, blobUrl); // crea <video> y lo guarda en el mapa
-
-    } catch (error) {
-      console.error("Error caching or loading video:", error);
-      createVideoElement(src, src); // fallback: lo carga directamente
-    }
-  });
-
-  await Promise.all(cachePromises);
+      try {
+        const cachedResponse = await cache.match(src);
+        if (cachedResponse) {
+          const blob = await cachedResponse.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          createVideoElement(src, blobUrl);
+        }
+      } catch (error) {
+        console.error(`❌ Error cargando ${src} desde caché:`, error);
+        createVideoElement(src, src); // fallback
+      }
+    })
+  );
 };
+
 
 
   const createVideoElement = (src: string, url: string) => {
