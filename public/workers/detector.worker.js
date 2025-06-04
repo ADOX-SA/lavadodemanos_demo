@@ -1,7 +1,6 @@
 // ✅ ESTO SÍ FUNCIONA EN PUBLIC/
 importScripts("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs");
 
-
 let model = null;
 let labels = [];
 let inputShape = [1, 416, 416, 3]; // Default por si no se obtiene bien
@@ -12,9 +11,27 @@ self.onmessage = async (e) => {
   if (type === "init") {
     try {
       console.log("📦 Cargando modelo desde:", data.modelUrl);
-      model = await tf.loadGraphModel(data.modelUrl);
+
+      model = await tf.loadGraphModel(data.modelUrl, {
+        onProgress: (fraction) => {
+          // Envía progreso al hilo principal
+          postMessage({
+            type: "progress",
+            value: Math.round(fraction * 100),
+            message: "Cargando modelo..."
+          });
+        }
+      });
+
       inputShape = model.inputs[0].shape;
       labels = data.labels;
+
+      // Enviar mensaje final cuando el modelo está listo
+      postMessage({
+        type: "progress",
+        value: 100,
+        message: "Modelo cargado completamente."
+      });
 
       postMessage({
         type: "ready",
@@ -27,6 +44,7 @@ self.onmessage = async (e) => {
       });
     }
   }
+
 
   if (type === "detect" && model) {
     console.log('detecting');
