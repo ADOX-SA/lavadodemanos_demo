@@ -33,7 +33,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     // Dibuja el frame actual del video en el canvas
     ctx.save();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    console.log(ctx.canvas.width, ctx.canvas.height);
+    //console.log(ctx.canvas.width, ctx.canvas.height);
     // Rota el canvas 180 grados alrededor del centro
     ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
     ctx.rotate(Math.PI);
@@ -41,9 +41,9 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
 
     // Dibuja el frame rotado
     ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
-    console.log(video.width, video.height, 'videowidth, video.height');
-    console.log(video.videoWidth, video.videoHeight, 'video.videoWidth, video.videoHeight');
-    console.log(ctx.canvas.width, ctx.canvas.height, 'ctx.canvas.width, ctx.canvas.height');
+    //console.log(video.width, video.height, 'videowidth, video.height');
+    //console.log(video.videoWidth, video.videoHeight, 'video.videoWidth, video.videoHeight');
+    //console.log(ctx.canvas.width, ctx.canvas.height, 'ctx.canvas.width, ctx.canvas.height');
 
     // Restaura el contexto
     ctx.restore();
