@@ -50,11 +50,14 @@ export const useLavadoLogic = () => {
       setInitializing(false);
       resetTimer();
       pauseTimer();
-      setStepScores(prev => {
-        const newScores = [...prev];
-        newScores[currentStep] = [];
-        return newScores;
-      });
+
+      // si dejas esto cuando se completa el proceso, se reinicia el stepScores del paso 6...
+      // setStepScores(prev => {
+      //   const newScores = [...prev];
+      //   newScores[currentStep] = [];
+      //   return newScores;
+      // });
+      
       setStepConfirmed(false);
       setShowFinalMessage(true);
       startCountdown();

@@ -54,8 +54,11 @@ const preloadVideos = async () => {
     setCachedCount((prev) => {
       const next = prev + 1;
       const percent = (next / totalVideos) * 100;
-      onProgress?.(percent);
-      return next;
+      setTimeout(() => {
+        onProgress?.(percent);
+      }, 0);
+      
+    return next;
     });
   })
 );
