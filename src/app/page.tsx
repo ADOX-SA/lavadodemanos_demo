@@ -122,7 +122,7 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [showFinalMessage]);
 
-  const fixedAverages = averages.map(avg => avg === 0 ? 62.5 : (avg === 1 ? 0 : avg));
+  const fixedAverages = averages.map(avg => avg === 0 ? 10.5 : (avg === 1 ? 0 : avg));
   const generalAverage = (
     fixedAverages.reduce((acc, val) => acc + val, 0) / fixedAverages.length
   ).toFixed(1);

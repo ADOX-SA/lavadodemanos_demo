@@ -66,7 +66,7 @@ self.onmessage = async (e) => {
             max = rawScoresData[index];
           }
         }
-        console.log(`Clase ${labels[i]}: ${max}`);
+        //console.log(`Clase ${labels[i]}: ${max}`);
         scores.push(max);
       }
       const predictions = scores
