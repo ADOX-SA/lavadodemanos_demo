@@ -32,7 +32,14 @@ export type ErrorMessage = {
   message: string;
 };
 
-export type WorkerResponse = ReadyMessage | ResultMessage | ErrorMessage;
+export type ProgressMessage = {
+  type: "progress";
+  value: number; // porcentaje (0-100)
+  message?: string;
+};
+
+export type WorkerResponse = ReadyMessage | ResultMessage | ErrorMessage | ProgressMessage;
+
 
 export type Prediction = {
   clase: string;

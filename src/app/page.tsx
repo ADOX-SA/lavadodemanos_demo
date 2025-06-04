@@ -43,7 +43,7 @@ export default function Home() {
     stepConfirmed
   } = useLavadoLogic();
 
-  const { ready, detect, predictions } = useDetectorWorker(labels, modelUrl);
+  const { ready, detect, predictions, loadingProgress } = useDetectorWorker(labels, modelUrl);
   const allowedTrust = 80;
 
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function Home() {
 
   return (
     <div className={style.centeredGrid}>
-      {!ready && (<Loader text="Cargando modelo y videos..." progress={videoProgress.toFixed(2) + (0).toFixed(2)} />)}
+      {!ready && (<Loader text="Cargando modelo y videos..." progress={((videoProgress + loadingProgress) / 2).toFixed(2)} />)}
       
       <div className={style.header}>
         <TitleProject />
@@ -151,9 +151,18 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={style.contentText}>
-        <p className={style.text}>Seguí el movimiento y ángulo de la imagen izquierda durante el tiempo indicado.</p>
+     <div className={style.contentText}>
+        {
+          completedSteps.every(Boolean) ? (
+            <p className={style.text}></p>
+          ) : (
+            <p className={style.text}>
+              Seguí el movimiento y ángulo de la imagen izquierda durante el tiempo indicado.
+            </p>
+          )
+        }
       </div>
+
 
       <div className={style.container}>
         <div className={style.column}>

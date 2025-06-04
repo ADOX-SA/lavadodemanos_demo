@@ -11,18 +11,21 @@ export const useDetectorWorker = (labels: string[], modelUrl?: string) => {
   const [ready, setReady] = useState(false);
   const [inputShape, setInputShape] = useState<number[] | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
 
   useEffect(() => {
-  if (!modelUrl || typeof window === "undefined") return;
+    if (!modelUrl || typeof window === "undefined") return;
 
-        workerRef.current = new Worker("/workers/detector.worker.js");
+    workerRef.current = new Worker("/workers/detector.worker.js");
 
     workerRef.current.onmessage = (e: MessageEvent<WorkerResponse>) => {
       const { type } = e.data;
 
       switch (type) {
         case "ready":
-          setReady(true);
+           setTimeout(() => {
+              setReady(true);
+            }, 1000); // Para que parezca natural
           setInputShape(e.data.inputShape);
           break;
         case "result":
@@ -30,6 +33,9 @@ export const useDetectorWorker = (labels: string[], modelUrl?: string) => {
           break;
         case "error":
           console.error("Worker error:", e.data.message);
+          break;
+        case "progress":
+          setLoadingProgress(e.data.value || 0);
           break;
       }
     };
@@ -56,6 +62,6 @@ export const useDetectorWorker = (labels: string[], modelUrl?: string) => {
     }
   };
 
-  return { ready, detect, predictions, inputShape };
+  return { ready, detect, predictions, inputShape, loadingProgress };
 };
 export default useDetectorWorker;
