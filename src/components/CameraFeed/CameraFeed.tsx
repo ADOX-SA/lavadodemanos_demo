@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { BorderTimer } from "@/components/BorderTimer";
 import EyeOffIcon from "@/components/IconEye/IconEye";
 import style from "./CameraFeed.module.css";
+import ProgressTime from "../TimeProgress/TimeProgress";
 interface CameraFeedProps {
   ready: boolean;
   timeLeft: number;
@@ -80,11 +81,13 @@ useEffect(() => {
         autoPlay
         muted
         ref={cameraRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          transform: "rotate(180deg)",
+         style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          transform: 'rotate(180deg)',
+          borderRadius: '16px',
+          overflow: 'hidden',
         }}
       />
 
@@ -102,7 +105,8 @@ useEffect(() => {
         // }}
       />
 
-      <BorderTimer timeLeft={timeLeft } initialTime={5} />
+      <BorderTimer timeLeft={timeLeft} initialTime={5} />
+      <ProgressTime key={timeLeft} initialTime={timeLeft} />
 
       {countdownTimeLeft > 0 && (
         <div className={style.warningMessage}>
@@ -116,7 +120,9 @@ useEffect(() => {
         <div className={style.finalMessage}>
           <p>¡Proceso de lavado completo! 🙌</p>
           <h3>Reinicio en {countdownTimeLeft}s.</h3>
-          <p>Presioná <strong>Enter</strong> para reiniciar ahora.</p>
+          <p>
+            Presioná <strong>Enter</strong> para reiniciar ahora.
+          </p>
         </div>
       )}
     </div>

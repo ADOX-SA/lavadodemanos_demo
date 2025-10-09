@@ -38,15 +38,6 @@
   gap: 24px;
 }
 
-
-
-
-
-
-
-/* Cambiar esto */
-
-
 .container {
   display: flex;
   flex-direction: column;
@@ -111,7 +102,7 @@
 
 .progressFill {
   height: 100%;
-  background: #AA4CF2;
+  background: #246cab;
   transition: width 0.5s ease-in-out;
 }
 
@@ -139,12 +130,13 @@
 
 .cameraContainer {
   position: relative;      /* clave para que los hijos absolutos se ubiquen aquí */
-  width: 100%;
+  width: fit-content; /* 👈 esto ajusta el ancho al contenido (el video) */
   height: 600px;
   overflow: hidden;
   background-image: url('/Camera/Camera.jpg');
   background-size: cover;
   background-position: center;
+  border-radius: 16px;
 }
 
 @media (min-width: 1024px) {

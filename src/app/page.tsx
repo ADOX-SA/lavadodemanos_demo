@@ -6,12 +6,11 @@ import style from "../style/App.module.css";
 import IconSteps from "@/components/IconSteps/IconSteps";
 import ProgressTime from "@/components/TimeProgress/TimeProgress";
 import labels from "../utils/labels.json";
-import LogoAdox from "../../public/LogoAdox/Logo";
-import TitleProject from "../../public/Titulo/Titulo";
 import useDetectorWorker from "@/hooks/useDetectorWorker";
 import { useLavadoLogic } from "@/hooks/useLavadoLogic";
 import { CameraFeed } from "@/components/CameraFeed";
 import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
+import { Navbar } from "@/components/Navbar";
 
 export default function Home() {
   const modelName = "hands_model";
@@ -131,12 +130,7 @@ export default function Home() {
     <div className={style.centeredGrid}>
       {!ready && (<Loader text="Cargando modelo y videos..." progress={((videoProgress + loadingProgress) / 2).toFixed(2)} />)}
       
-      <div className={style.header}>
-        <TitleProject />
-        <LogoAdox />
-      </div>
-
-      <div className={style.divider} />
+      <Navbar />
 
       <div className={style.steps}>
         <p>Control de lavado de manos</p>
@@ -145,22 +139,18 @@ export default function Home() {
             <IconSteps
               key={i}
               steps={i + 1}
-              color={completedSteps[i] || i === currentStep ? "#AA4CF2" : "#D9D9D9"}
+              color={completedSteps[i] || i === currentStep ? "#246cab" : "#D9D9D9"}
             />
           ))}
         </div>
       </div>
 
      <div className={style.contentText}>
-        {
-          completedSteps.every(Boolean) ? (
-            <p className={style.text}></p>
-          ) : (
-            <p className={style.text}>
-              Seguí el movimiento y ángulo de la imagen izquierda durante el tiempo indicado.
-            </p>
-          )
-        }
+        {!completedSteps.every((v) => v) ? (
+          <p className={style.text}>Seguí el movimiento y ángulo de la imagen izquierda durante el tiempo indicado.</p>
+        ) : (
+          <p className={style.text}>Proceso de lavado de manos finalizado.</p>
+        )}
       </div>
 
 
@@ -189,22 +179,23 @@ export default function Home() {
             </div>
           </div>
 
-          <CameraFeed 
-              ready={ready}
-              timeLeft={timeLeft}
-              countdownTimeLeft={countdownTimeLeft}
-              showFinalMessage={showFinalMessage}
-              cameraRef={cameraRef}
-              detect={detect}
-              allowedTrust={allowedTrust}
-              stopDetectionRef={stopDetectionRef}
+          <CameraFeed
+            ready={ready}
+            timeLeft={timeLeft}
+            countdownTimeLeft={countdownTimeLeft}
+            showFinalMessage={showFinalMessage}
+            cameraRef={cameraRef}
+            detect={detect}
+            allowedTrust={allowedTrust}
+            stopDetectionRef={stopDetectionRef}
           />
           
-          <ProgressTime key={timeLeft} initialTime={timeLeft} />
         </div>
       </div>
 
       <div className={style.divider} />
+
+      <p className={style.footer}>&copy; {new Date().getFullYear()} Adox S.A. Todos los derechos reservados.</p>
     </div>
   );
 }

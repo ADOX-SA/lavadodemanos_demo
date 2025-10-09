@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@adoxdesarrollos/designsystem-2": "^0.9.10",
+    "@szhsin/react-menu": "^4.5.0",
     "@tensorflow/tfjs": "^4.22.0",
     "canvas-confetti": "^1.9.3",
     "next": "15.1.4",

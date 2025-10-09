@@ -96,6 +96,12 @@ const preloadVideos = async () => {
     video.width = width;
     video.height = height;
 
+    // 🔽 Estilos del video
+    video.style.borderRadius = "16px";
+    video.style.objectFit = "cover";
+    video.style.display = "block";
+    video.style.maxWidth = "100%";
+
     video.addEventListener("canplaythrough", () => {
       const entry = videoCache.current.get(src);
       if (entry) entry.status = "loaded";
